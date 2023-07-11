@@ -1,0 +1,4562 @@
+zabbix_export:
+  version: '6.0'
+  date: '2023-03-10T10:58:19Z'
+  groups:
+    -
+      uuid: b113b849eed0417b95be523930a8ab67
+      name: 'Commtel Templates'
+  templates:
+    -
+      uuid: 0475e8a0de954bc0ad0bfd6b4827546f
+      template: 'Dell iDRAC by SNMP -Commtel'
+      name: 'Dell iDRAC by SNMP -Commtel'
+      description: |
+        Template Server iDRAC
+        
+        MIBs used:
+        HOST-RESOURCES-MIB
+        IDRAC-MIB-SMIv2
+        SNMPv2-MIB
+        
+        Template tooling version used: 0.41
+      groups:
+        -
+          name: 'Commtel Templates'
+      items:
+        -
+          uuid: 6ab54fbe1b0a4f62bb10f699fc167457
+          name: 'ICMP ping'
+          type: SIMPLE
+          key: icmpping
+          history: 1w
+          valuemap:
+            name: 'Service state'
+          tags:
+            -
+              tag: component
+              value: health
+            -
+              tag: component
+              value: network
+          triggers:
+            -
+              uuid: 895cd7a88e4e47e098ccb61665dcc4fc
+              expression: 'max(/Dell iDRAC by SNMP -Commtel/icmpping,#3)=0'
+              name: 'Unavailable by ICMP ping'
+              priority: HIGH
+              description: 'Last three attempts returned timeout.  Please check device connectivity.'
+              tags:
+                -
+                  tag: scope
+                  value: availability
+        -
+          uuid: eafd42848bd141278cd8101498e2c0e4
+          name: 'ICMP loss'
+          type: SIMPLE
+          key: icmppingloss
+          history: 1w
+          value_type: FLOAT
+          units: '%'
+          tags:
+            -
+              tag: component
+              value: health
+            -
+              tag: component
+              value: network
+          triggers:
+            -
+              uuid: 3ca2aa33d21241c585874138828a3dd5
+              expression: 'min(/Dell iDRAC by SNMP -Commtel/icmppingloss,5m)>{$ICMP_LOSS_WARN} and min(/Dell iDRAC by SNMP -Commtel/icmppingloss,5m)<100'
+              name: 'High ICMP ping loss'
+              opdata: 'Loss: {ITEM.LASTVALUE1}'
+              priority: WARNING
+              dependencies:
+                -
+                  name: 'Unavailable by ICMP ping'
+                  expression: 'max(/Dell iDRAC by SNMP -Commtel/icmpping,#3)=0'
+              tags:
+                -
+                  tag: scope
+                  value: availability
+                -
+                  tag: scope
+                  value: performance
+        -
+          uuid: c0ff125d1840424d9dbb6f045b7e7b20
+          name: 'ICMP response time'
+          type: SIMPLE
+          key: icmppingsec
+          history: 1w
+          value_type: FLOAT
+          units: s
+          tags:
+            -
+              tag: component
+              value: health
+            -
+              tag: component
+              value: network
+          triggers:
+            -
+              uuid: d5c0e7406076480da9acc97a257f567e
+              expression: 'avg(/Dell iDRAC by SNMP -Commtel/icmppingsec,5m)>{$ICMP_RESPONSE_TIME_WARN}'
+              name: 'High ICMP ping response time'
+              opdata: 'Value: {ITEM.LASTVALUE1}'
+              priority: WARNING
+              dependencies:
+                -
+                  name: 'High ICMP ping loss'
+                  expression: 'min(/Dell iDRAC by SNMP -Commtel/icmppingloss,5m)>{$ICMP_LOSS_WARN} and min(/Dell iDRAC by SNMP -Commtel/icmppingloss,5m)<100'
+                -
+                  name: 'Unavailable by ICMP ping'
+                  expression: 'max(/Dell iDRAC by SNMP -Commtel/icmpping,#3)=0'
+              tags:
+                -
+                  tag: scope
+                  value: availability
+                -
+                  tag: scope
+                  value: performance
+        -
+          uuid: 55a08f69c38c4e00b25fde6bc661ca05
+          name: 'SNMP traps (fallback)'
+          type: SNMP_TRAP
+          key: snmptrap.fallback
+          history: 2w
+          trends: '0'
+          value_type: LOG
+          description: 'The item is used to collect all SNMP traps unmatched by other snmptrap items'
+          logtimefmt: 'hh:mm:sszyyyy/MM/dd'
+          tags:
+            -
+              tag: component
+              value: network
+        -
+          uuid: c7a13bb4c0ac4a3b81fc98595f4d6f80
+          name: 'System contact details'
+          type: SNMP_AGENT
+          snmp_oid: 1.3.6.1.2.1.1.4.0
+          key: 'system.contact[sysContact.0]'
+          delay: 15m
+          history: 2w
+          trends: '0'
+          value_type: CHAR
+          description: |
+            MIB: SNMPv2-MIB
+            The textual identification of the contact person for this managed node, together with information on how to contact this person.  If no contact information is known, the value is the zero-length string.
+          inventory_link: CONTACT
+          preprocessing:
+            -
+              type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 12h
+          tags:
+            -
+              tag: component
+              value: system
+        -
+          uuid: d41fd0f4795e4ea4b4ad4badf765e717
+          name: 'System description'
+          type: SNMP_AGENT
+          snmp_oid: 1.3.6.1.2.1.1.1.0
+          key: 'system.descr[sysDescr.0]'
+          delay: 15m
+          history: 2w
+          trends: '0'
+          value_type: CHAR
+          description: |
+            MIB: SNMPv2-MIB
+            A textual description of the entity. This value should
+            include the full name and version identification of the system's hardware type, software operating-system, and
+            networking software.
+          preprocessing:
+            -
+              type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 12h
+          tags:
+            -
+              tag: component
+              value: system
+        -
+          uuid: d5148a9cf09241f58c322f77021ae47a
+          name: 'Firmware version'
+          type: SNMP_AGENT
+          snmp_oid: 1.3.6.1.4.1.674.10892.5.1.1.8.0
+          key: system.hw.firmware
+          delay: 1h
+          history: 2w
+          trends: '0'
+          value_type: CHAR
+          description: |
+            MIB: IDRAC-MIB-SMIv2
+            This attribute defines the firmware version of a remote access card.
+          preprocessing:
+            -
+              type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          tags:
+            -
+              tag: component
+              value: system
+          triggers:
+            -
+              uuid: c495efcd84ad48329168ae1074aecc6f
+              expression: 'last(/Dell iDRAC by SNMP -Commtel/system.hw.firmware,#1)<>last(/Dell iDRAC by SNMP -Commtel/system.hw.firmware,#2) and length(last(/Dell iDRAC by SNMP -Commtel/system.hw.firmware))>0'
+              name: 'Firmware has changed'
+              opdata: 'Current value: {ITEM.LASTVALUE1}'
+              priority: INFO
+              description: 'Firmware version has changed. Ack to close'
+              manual_close: 'YES'
+              tags:
+                -
+                  tag: scope
+                  value: notice
+        -
+          uuid: 3af1dc5519c34c4c8d13dff46c92cf46
+          name: 'Hardware model name'
+          type: SNMP_AGENT
+          snmp_oid: 1.3.6.1.4.1.674.10892.5.1.3.12.0
+          key: system.hw.model
+          delay: 1h
+          history: 2w
+          trends: '0'
+          value_type: CHAR
+          description: |
+            MIB: IDRAC-MIB-SMIv2
+            This attribute defines the model name of the system.
+          inventory_link: MODEL
+          preprocessing:
+            -
+              type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          tags:
+            -
+              tag: component
+              value: system
+        -
+          uuid: 256b0aaa62d94971a66d4a75209ef8f1
+          name: 'Hardware serial number'
+          type: SNMP_AGENT
+          snmp_oid: 1.3.6.1.4.1.674.10892.5.1.3.2.0
+          key: system.hw.serialnumber
+          delay: 1h
+          history: 2w
+          trends: '0'
+          value_type: CHAR
+          description: |
+            MIB: IDRAC-MIB-SMIv2
+            This attribute defines the service tag of the system.
+          inventory_link: SERIALNO_A
+          preprocessing:
+            -
+              type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          tags:
+            -
+              tag: component
+              value: system
+          triggers:
+            -
+              uuid: 2f71776aae00449abd068fe6b5c732ad
+              expression: 'last(/Dell iDRAC by SNMP -Commtel/system.hw.serialnumber,#1)<>last(/Dell iDRAC by SNMP -Commtel/system.hw.serialnumber,#2) and length(last(/Dell iDRAC by SNMP -Commtel/system.hw.serialnumber))>0'
+              name: 'Device has been replaced'
+              event_name: 'Device has been replaced (new serial number received)'
+              priority: INFO
+              description: 'Device serial number has changed. Ack to close'
+              manual_close: 'YES'
+              tags:
+                -
+                  tag: scope
+                  value: notice
+        -
+          uuid: 8b2b9cc0ded14695b1fadae70207b91c
+          name: 'Uptime (hardware)'
+          type: SNMP_AGENT
+          snmp_oid: 1.3.6.1.2.1.25.1.1.0
+          key: 'system.hw.uptime[hrSystemUptime.0]'
+          delay: 30s
+          history: 2w
+          trends: 0d
+          units: uptime
+          description: |
+            MIB: HOST-RESOURCES-MIB
+            The amount of time since this host was last initialized. Note that this is different from sysUpTime in the SNMPv2-MIB [RFC1907] because sysUpTime is the uptime of the network management portion of the system.
+          preprocessing:
+            -
+              type: CHECK_NOT_SUPPORTED
+              parameters:
+                - ''
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            -
+              type: MULTIPLIER
+              parameters:
+                - '0.01'
+          tags:
+            -
+              tag: component
+              value: system
+        -
+          uuid: 35a8b9038e394ecf846ac63f98921961
+          name: 'System location'
+          type: SNMP_AGENT
+          snmp_oid: 1.3.6.1.2.1.1.6.0
+          key: 'system.location[sysLocation.0]'
+          delay: 15m
+          history: 2w
+          trends: '0'
+          value_type: CHAR
+          description: |
+            MIB: SNMPv2-MIB
+            The physical location of this node (e.g., `telephone closet, 3rd floor').  If the location is unknown, the value is the zero-length string.
+          inventory_link: LOCATION
+          preprocessing:
+            -
+              type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 12h
+          tags:
+            -
+              tag: component
+              value: system
+        -
+          uuid: 93c066ea95ce41e19ee0c24811ab521c
+          name: 'System name'
+          type: SNMP_AGENT
+          snmp_oid: 1.3.6.1.2.1.1.5.0
+          key: system.name
+          delay: 15m
+          history: 2w
+          trends: '0'
+          value_type: CHAR
+          description: |
+            MIB: SNMPv2-MIB
+            An administratively-assigned name for this managed node.By convention, this is the node's fully-qualified domain name.  If the name is unknown, the value is the zero-length string.
+          inventory_link: NAME
+          preprocessing:
+            -
+              type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 12h
+          tags:
+            -
+              tag: component
+              value: system
+          triggers:
+            -
+              uuid: 70e9a8533be545caa2c981b9000eaf2d
+              expression: 'last(/Dell iDRAC by SNMP -Commtel/system.name,#1)<>last(/Dell iDRAC by SNMP -Commtel/system.name,#2) and length(last(/Dell iDRAC by SNMP -Commtel/system.name))>0'
+              name: 'System name has changed'
+              event_name: 'System name has changed (new name: {ITEM.VALUE})'
+              priority: INFO
+              description: 'System name has changed. Ack to close.'
+              manual_close: 'YES'
+              tags:
+                -
+                  tag: scope
+                  value: notice
+                -
+                  tag: scope
+                  value: security
+        -
+          uuid: 0458372b22d948d3b711c78c5dece1ba
+          name: 'Uptime (network)'
+          type: SNMP_AGENT
+          snmp_oid: 1.3.6.1.2.1.1.3.0
+          key: 'system.net.uptime[sysUpTime.0]'
+          delay: 30s
+          history: 2w
+          trends: 0d
+          units: uptime
+          description: |
+            MIB: SNMPv2-MIB
+            The time (in hundredths of a second) since the network management portion of the system was last re-initialized.
+          preprocessing:
+            -
+              type: MULTIPLIER
+              parameters:
+                - '0.01'
+          tags:
+            -
+              tag: component
+              value: system
+        -
+          uuid: c4e6d0794b3247bbbc0883d2f830994d
+          name: 'System object ID'
+          type: SNMP_AGENT
+          snmp_oid: 1.3.6.1.2.1.1.2.0
+          key: 'system.objectid[sysObjectID.0]'
+          delay: 15m
+          history: 2w
+          trends: '0'
+          value_type: CHAR
+          description: |
+            MIB: SNMPv2-MIB
+            The vendor's authoritative identification of the network management subsystem contained in the entity.  This value is allocated within the SMI enterprises subtree (1.3.6.1.4.1) and provides an easy and unambiguous means for determining`what kind of box' is being managed.  For example, if vendor`Flintstones, Inc.' was assigned the subtree1.3.6.1.4.1.4242, it could assign the identifier 1.3.6.1.4.1.4242.1.1 to its `Fred Router'.
+          preprocessing:
+            -
+              type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 12h
+          tags:
+            -
+              tag: component
+              value: system
+        -
+          uuid: 7426c7546e714ae8b802f6a7a3e7de23
+          name: 'Overall system health status'
+          type: SNMP_AGENT
+          snmp_oid: 1.3.6.1.4.1.674.10892.5.2.1.0
+          key: 'system.status[globalSystemStatus.0]'
+          delay: 30s
+          history: 2w
+          trends: 0d
+          description: |
+            MIB: IDRAC-MIB-SMIv2
+            This attribute defines the overall rollup status of all components in the system being monitored by the remote access card. Includes system, storage, IO devices, iDRAC, CPU, memory, etc.
+          valuemap:
+            name: 'IDRAC-MIB-SMIv2::ObjectStatusEnum'
+          tags:
+            -
+              tag: component
+              value: system
+          triggers:
+            -
+              uuid: 33164f8619cd49148baa54adde2c87ef
+              expression: 'count(/Dell iDRAC by SNMP -Commtel/system.status[globalSystemStatus.0],#1,"eq","{$HEALTH_DISASTER_STATUS}")=1'
+              name: 'System is in unrecoverable state!'
+              opdata: 'Current state: {ITEM.LASTVALUE1}'
+              priority: HIGH
+              description: 'Please check the device for faults'
+              tags:
+                -
+                  tag: scope
+                  value: availability
+                -
+                  tag: scope
+                  value: performance
+            -
+              uuid: 3cd776616c674fd59e431f3038dc4bea
+              expression: 'count(/Dell iDRAC by SNMP -Commtel/system.status[globalSystemStatus.0],#1,"eq","{$HEALTH_CRIT_STATUS}")=1'
+              name: 'System status is in critical state'
+              opdata: 'Current state: {ITEM.LASTVALUE1}'
+              priority: HIGH
+              description: 'Please check the device for errors'
+              dependencies:
+                -
+                  name: 'System is in unrecoverable state!'
+                  expression: 'count(/Dell iDRAC by SNMP -Commtel/system.status[globalSystemStatus.0],#1,"eq","{$HEALTH_DISASTER_STATUS}")=1'
+              tags:
+                -
+                  tag: scope
+                  value: availability
+                -
+                  tag: scope
+                  value: performance
+            -
+              uuid: 0861ffb888bb4824b2d5789c1ebbb7ca
+              expression: 'count(/Dell iDRAC by SNMP -Commtel/system.status[globalSystemStatus.0],#1,"eq","{$HEALTH_WARN_STATUS}")=1'
+              name: 'System status is in warning state'
+              opdata: 'Current state: {ITEM.LASTVALUE1}'
+              priority: WARNING
+              description: 'Please check the device for warnings'
+              dependencies:
+                -
+                  name: 'System is in unrecoverable state!'
+                  expression: 'count(/Dell iDRAC by SNMP -Commtel/system.status[globalSystemStatus.0],#1,"eq","{$HEALTH_DISASTER_STATUS}")=1'
+                -
+                  name: 'System status is in critical state'
+                  expression: 'count(/Dell iDRAC by SNMP -Commtel/system.status[globalSystemStatus.0],#1,"eq","{$HEALTH_CRIT_STATUS}")=1'
+              tags:
+                -
+                  tag: scope
+                  value: availability
+                -
+                  tag: scope
+                  value: performance
+        -
+          uuid: 17935e7bee6c4615b5332b0ca7a81f35
+          name: 'Operating system'
+          type: SNMP_AGENT
+          snmp_oid: 1.3.6.1.4.1.674.10892.5.1.3.6.0
+          key: 'system.sw.os[systemOSName]'
+          delay: 1h
+          history: 2w
+          trends: '0'
+          value_type: CHAR
+          description: |
+            MIB: IDRAC-MIB-SMIv2
+            This attribute defines the name of the operating system that the hostis running.
+          inventory_link: OS
+          preprocessing:
+            -
+              type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          tags:
+            -
+              tag: component
+              value: os
+          triggers:
+            -
+              uuid: b29d130e87ec4e85aaeb9af6ff49a8ba
+              expression: 'last(/Dell iDRAC by SNMP -Commtel/system.sw.os[systemOSName],#1)<>last(/Dell iDRAC by SNMP -Commtel/system.sw.os[systemOSName],#2) and length(last(/Dell iDRAC by SNMP -Commtel/system.sw.os[systemOSName]))>0'
+              name: 'Operating system description has changed'
+              priority: INFO
+              description: 'Operating system description has changed. Possible reasons that system has been updated or replaced. Ack to close.'
+              manual_close: 'YES'
+              dependencies:
+                -
+                  name: 'System name has changed'
+                  expression: 'last(/Dell iDRAC by SNMP -Commtel/system.name,#1)<>last(/Dell iDRAC by SNMP -Commtel/system.name,#2) and length(last(/Dell iDRAC by SNMP -Commtel/system.name))>0'
+              tags:
+                -
+                  tag: scope
+                  value: notice
+        -
+          uuid: 05855a76e3ac4c55b96e97c45fc1ae14
+          name: 'SNMP agent availability'
+          type: INTERNAL
+          key: 'zabbix[host,snmp,available]'
+          history: 7d
+          description: |
+            Availability of SNMP checks on the host. The value of this item corresponds to availability icons in the host list.
+            Possible value:
+            0 - not available
+            1 - available
+            2 - unknown
+          valuemap:
+            name: zabbix.host.available
+          tags:
+            -
+              tag: component
+              value: health
+            -
+              tag: component
+              value: network
+          triggers:
+            -
+              uuid: 97801507394843e1a25569bc6fcadc63
+              expression: 'max(/Dell iDRAC by SNMP -Commtel/zabbix[host,snmp,available],{$SNMP.TIMEOUT})=0'
+              name: 'No SNMP data collection'
+              opdata: 'Current state: {ITEM.LASTVALUE1}'
+              priority: WARNING
+              description: 'SNMP is not available for polling. Please check device connectivity and SNMP settings.'
+              dependencies:
+                -
+                  name: 'Unavailable by ICMP ping'
+                  expression: 'max(/Dell iDRAC by SNMP -Commtel/icmpping,#3)=0'
+              tags:
+                -
+                  tag: scope
+                  value: availability
+      discovery_rules:
+        -
+          uuid: aabf3f6b726446288d419d624a91ab39
+          name: 'Amperage Discovery'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},1.3.6.1.4.1.674.10892.5.4.600.30.1.2.1,{#PROBE_DESCR},1.3.6.1.4.1.674.10892.5.4.600.30.1.8.1]'
+          key: amp.discovery
+          delay: 1h
+          description: 'IDRAC-MIB-SMIv2::amperageProbeTable'
+          item_prototypes:
+            -
+              uuid: b8af949eb56949c1872dc4c6a767575a
+              name: '{#PROBE_DESCR} : Ampere Consumption'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.600.30.1.6.1.{#SNMPVALUE}'
+              key: 'amp.consumption[{#SNMPVALUE}]'
+              units: mA
+              tags:
+                -
+                  tag: component
+                  value: current
+                -
+                  tag: component
+                  value: power
+            -
+              uuid: 9c76fb833d1042aa85a28751eb2130b2
+              name: '{#PROBE_DESCR} : Ampere Probe Status'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.600.30.1.5.1.{#SNMPVALUE}'
+              key: 'amp.Status[Probe.{#SNMPVALUE}]'
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::amperageProbeStatus'
+              tags:
+                -
+                  tag: component
+                  value: current
+                -
+                  tag: component
+                  value: power
+        -
+          uuid: 28b63be07a12492dabf3025c751c0f0d
+          name: 'Array Controller Cache Discovery'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#BATTERY_NUM},1.3.6.1.4.1.674.10892.5.5.1.20.130.15.1.1]'
+          key: array.cache.discovery
+          delay: 1h
+          description: 'IDRAC-MIB-SMIv2::batteryTable'
+          item_prototypes:
+            -
+              uuid: 698d62f5cd6447df92bc52c08ea9160e
+              name: 'Battery {#BATTERY_NUM}: Disk array cache controller battery Component status'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.15.1.6.{#SNMPINDEX}'
+              key: 'system.hw.diskarray.cache.battery.status[batteryCompState.{#SNMPINDEX}]'
+              history: 1w
+              trends: '0'
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                Current state of battery.
+                Possible values:
+                1: The current state could not be determined.
+                2: The battery is operating normally.
+                3: The battery has failed and needs to be replaced.
+                4: The battery temperature is high or charge level is depleting.
+                5: The battery is missing or not detected.
+                6: The battery is undergoing the re-charge phase.
+                7: The battery voltage or charge level is below the threshold.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::StatusProbeEnum'
+              tags:
+                -
+                  tag: component
+                  value: array
+                -
+                  tag: component
+                  value: battery
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+            -
+              uuid: 7e91beaba6194dd6a209d2c2641f9e2e
+              name: 'Battery {#BATTERY_NUM}: Disk array cache controller battery status'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.15.1.4.{#SNMPINDEX}'
+              key: 'system.hw.diskarray.cache.battery.status[batteryState.{#SNMPINDEX}]'
+              history: 1w
+              trends: '0'
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                Current state of battery.
+                Possible values:
+                1: The current state could not be determined.
+                2: The battery is operating normally.
+                3: The battery has failed and needs to be replaced.
+                4: The battery temperature is high or charge level is depleting.
+                5: The battery is missing or not detected.
+                6: The battery is undergoing the re-charge phase.
+                7: The battery voltage or charge level is below the threshold.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::batteryState'
+              tags:
+                -
+                  tag: component
+                  value: array
+                -
+                  tag: component
+                  value: battery
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+              trigger_prototypes:
+                -
+                  uuid: e5f285fbcb7449b080e55000300bc7a3
+                  expression: 'count(/Dell iDRAC by SNMP -Commtel/system.hw.diskarray.cache.battery.status[batteryState.{#SNMPINDEX}],#1,"eq","{$DISK_ARRAY_CACHE_BATTERY_CRIT_STATUS}")=1'
+                  name: 'Battery {#BATTERY_NUM}: Disk array cache controller battery is in critical state!'
+                  opdata: 'Current state: {ITEM.LASTVALUE1}'
+                  priority: AVERAGE
+                  description: 'Please check the device for faults'
+                  tags:
+                    -
+                      tag: scope
+                      value: availability
+                    -
+                      tag: scope
+                      value: performance
+                -
+                  uuid: aca44e3bf0ee4111af81ba950037143a
+                  expression: 'count(/Dell iDRAC by SNMP -Commtel/system.hw.diskarray.cache.battery.status[batteryState.{#SNMPINDEX}],#1,"eq","{$DISK_ARRAY_CACHE_BATTERY_WARN_STATUS}")=1'
+                  name: 'Battery {#BATTERY_NUM}: Disk array cache controller battery is in warning state'
+                  opdata: 'Current state: {ITEM.LASTVALUE1}'
+                  priority: WARNING
+                  description: 'Please check the device for faults'
+                  dependencies:
+                    -
+                      name: 'Battery {#BATTERY_NUM}: Disk array cache controller battery is in critical state!'
+                      expression: 'count(/Dell iDRAC by SNMP -Commtel/system.hw.diskarray.cache.battery.status[batteryState.{#SNMPINDEX}],#1,"eq","{$DISK_ARRAY_CACHE_BATTERY_CRIT_STATUS}")=1'
+                  tags:
+                    -
+                      tag: scope
+                      value: availability
+                    -
+                      tag: scope
+                      value: performance
+                -
+                  uuid: a42e6534c059432b8e9dea39faac0ac9
+                  expression: 'count(/Dell iDRAC by SNMP -Commtel/system.hw.diskarray.cache.battery.status[batteryState.{#SNMPINDEX}],#1,"ne","{$DISK_ARRAY_CACHE_BATTERY_OK_STATUS}")=1'
+                  name: 'Battery {#BATTERY_NUM}: Disk array cache controller battery is not in optimal state'
+                  opdata: 'Current state: {ITEM.LASTVALUE1}'
+                  priority: WARNING
+                  description: 'Please check the device for faults'
+                  dependencies:
+                    -
+                      name: 'Battery {#BATTERY_NUM}: Disk array cache controller battery is in critical state!'
+                      expression: 'count(/Dell iDRAC by SNMP -Commtel/system.hw.diskarray.cache.battery.status[batteryState.{#SNMPINDEX}],#1,"eq","{$DISK_ARRAY_CACHE_BATTERY_CRIT_STATUS}")=1'
+                    -
+                      name: 'Battery {#BATTERY_NUM}: Disk array cache controller battery is in warning state'
+                      expression: 'count(/Dell iDRAC by SNMP -Commtel/system.hw.diskarray.cache.battery.status[batteryState.{#SNMPINDEX}],#1,"eq","{$DISK_ARRAY_CACHE_BATTERY_WARN_STATUS}")=1'
+                  tags:
+                    -
+                      tag: scope
+                      value: availability
+                    -
+                      tag: scope
+                      value: performance
+        -
+          uuid: fbb6101d83be4850a6707fc4ca375a57
+          name: 'Battery Discovery'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},1.3.6.1.4.1.674.10892.5.4.600.50.1.2.1,{#PROBE_DESCR},1.3.6.1.4.1.674.10892.5.4.600.50.1.7.1]'
+          key: battery.discovery
+          delay: 1h
+          description: 'IDRAC-MIB-SMIv2::systemBatteryTable'
+          item_prototypes:
+            -
+              uuid: 05b774315e974cf78b2ce83ce6ae3b79
+              name: '{PROBE_DESCR} : Battery Reading'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.600.50.1.6.1.{#SNMPVALUE}'
+              key: 'battery.reading[{#SNMPVALUE}]'
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::systemBatteryReading'
+            -
+              uuid: 1470d40b86bc4a2391a37e9f5241f6f1
+              name: '{PROBE_DESCR} : Battery Setting'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.600.50.1.4.1.{#SNMPVALUE}'
+              key: 'battery.setting[{#SNMPVALUE}]'
+              valuemap:
+                name: 'IDARC-MIB-SMIv2::systemBatteryStateSettings'
+            -
+              uuid: cd5500fe1ee54486b2272b184f1c9ee2
+              name: '{PROBE_DESCR} : Battery Status'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.600.50.1.5.1.{#SNMPVALUE}'
+              key: 'battery.status[{#SNMPVALUE}]'
+              valuemap:
+                name: 'IDARC-MIB-SMIv2:: systemBatteryStatus'
+        -
+          uuid: a99c7dbc0579454f929671567cb4f8df
+          name: 'FAN Discovery'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},1.3.6.1.4.1.674.10892.5.4.700.12.1.5,{#FAN_DESCR},1.3.6.1.4.1.674.10892.5.4.700.12.1.8,{#TYPE},1.3.6.1.4.1.674.10892.5.4.700.12.1.7]'
+          key: fan.discovery
+          delay: 1h
+          filter:
+            conditions:
+              -
+                macro: '{#TYPE}'
+                value: '3'
+                formulaid: A
+          description: 'IDRAC-MIB-SMIv2::coolingDeviceTable'
+          item_prototypes:
+            -
+              uuid: 86df123b4944410f96ba327f19fdd439
+              name: '{#FAN_DESCR}: Fan speed'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.700.12.1.6.{#SNMPINDEX}'
+              key: 'sensor.fan.speed[coolingDeviceReading.{#SNMPINDEX}]'
+              units: rpm
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                0700.0012.0001.0006 This attribute defines the reading for a cooling device
+                of subtype other than coolingDeviceSubTypeIsDiscrete.  When the value
+                for coolingDeviceSubType is other than coolingDeviceSubTypeIsDiscrete, the
+                value returned for this attribute is the speed in RPM or the OFF/ON value
+                of the cooling device.  When the value for coolingDeviceSubType is
+                coolingDeviceSubTypeIsDiscrete, a value is not returned for this attribute.
+              tags:
+                -
+                  tag: component
+                  value: fan
+            -
+              uuid: c526431a273348feb7c43c1eff5e0fea
+              name: '{#FAN_DESCR}: Fan status'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.700.12.1.5.{#SNMPINDEX}'
+              key: 'sensor.fan.status[coolingDeviceStatus.{#SNMPINDEX}]'
+              delay: 3m
+              history: 2w
+              trends: 0d
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                0700.0012.0001.0005 This attribute defines the probe status of the cooling device.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::StatusProbeEnum'
+              tags:
+                -
+                  tag: component
+                  value: fan
+              trigger_prototypes:
+                -
+                  uuid: ad50cb0ababf4829adf16d7cfdb6b3bc
+                  expression: 'count(/Dell iDRAC by SNMP -Commtel/sensor.fan.status[coolingDeviceStatus.{#SNMPINDEX}],#1,"eq","{$FAN_CRIT_STATUS:\"criticalUpper\"}")=1 or count(/Dell iDRAC by SNMP -Commtel/sensor.fan.status[coolingDeviceStatus.{#SNMPINDEX}],#1,"eq","{$FAN_CRIT_STATUS:\"nonRecoverableUpper\"}")=1 or count(/Dell iDRAC by SNMP -Commtel/sensor.fan.status[coolingDeviceStatus.{#SNMPINDEX}],#1,"eq","{$FAN_CRIT_STATUS:\"criticalLower\"}")=1 or count(/Dell iDRAC by SNMP -Commtel/sensor.fan.status[coolingDeviceStatus.{#SNMPINDEX}],#1,"eq","{$FAN_CRIT_STATUS:\"nonRecoverableLower\"}")=1 or count(/Dell iDRAC by SNMP -Commtel/sensor.fan.status[coolingDeviceStatus.{#SNMPINDEX}],#1,"eq","{$FAN_CRIT_STATUS:\"failed\"}")=1'
+                  name: '{#FAN_DESCR}: Fan is in critical state'
+                  opdata: 'Current state: {ITEM.LASTVALUE1}'
+                  priority: AVERAGE
+                  description: 'Please check the fan unit'
+                  tags:
+                    -
+                      tag: scope
+                      value: availability
+                    -
+                      tag: scope
+                      value: performance
+                -
+                  uuid: 352055a6b7ba44eca35d53bc71a7f115
+                  expression: 'count(/Dell iDRAC by SNMP -Commtel/sensor.fan.status[coolingDeviceStatus.{#SNMPINDEX}],#1,"eq","{$FAN_WARN_STATUS:\"nonCriticalUpper\"}")=1 or count(/Dell iDRAC by SNMP -Commtel/sensor.fan.status[coolingDeviceStatus.{#SNMPINDEX}],#1,"eq","{$FAN_WARN_STATUS:\"nonCriticalLower\"}")=1'
+                  name: '{#FAN_DESCR}: Fan is in warning state'
+                  opdata: 'Current state: {ITEM.LASTVALUE1}'
+                  priority: WARNING
+                  description: 'Please check the fan unit'
+                  dependencies:
+                    -
+                      name: '{#FAN_DESCR}: Fan is in critical state'
+                      expression: 'count(/Dell iDRAC by SNMP -Commtel/sensor.fan.status[coolingDeviceStatus.{#SNMPINDEX}],#1,"eq","{$FAN_CRIT_STATUS:\"criticalUpper\"}")=1 or count(/Dell iDRAC by SNMP -Commtel/sensor.fan.status[coolingDeviceStatus.{#SNMPINDEX}],#1,"eq","{$FAN_CRIT_STATUS:\"nonRecoverableUpper\"}")=1 or count(/Dell iDRAC by SNMP -Commtel/sensor.fan.status[coolingDeviceStatus.{#SNMPINDEX}],#1,"eq","{$FAN_CRIT_STATUS:\"criticalLower\"}")=1 or count(/Dell iDRAC by SNMP -Commtel/sensor.fan.status[coolingDeviceStatus.{#SNMPINDEX}],#1,"eq","{$FAN_CRIT_STATUS:\"nonRecoverableLower\"}")=1 or count(/Dell iDRAC by SNMP -Commtel/sensor.fan.status[coolingDeviceStatus.{#SNMPINDEX}],#1,"eq","{$FAN_CRIT_STATUS:\"failed\"}")=1'
+                  tags:
+                    -
+                      tag: scope
+                      value: availability
+                    -
+                      tag: scope
+                      value: performance
+        -
+          uuid: dbb97582e89a4780afe9d0469724eb01
+          name: 'Memory Discovery'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},1.3.6.1.4.1.674.10892.5.4.1100.50.1.1.1,{#MEMORY},1.3.6.1.4.1.674.10892.5.4.1100.50.1.26.1]'
+          key: memory.discovery
+          delay: 1h
+          description: 'IDRAC-MIB-SMIv2::MemoryDeviceTable'
+          item_prototypes:
+            -
+              uuid: 53ffead2749e41018b46f969a9315d79
+              name: '{#MEMORY} : Device Max Speed'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.50.1.15.1.{#SNMPINDEX}'
+              key: 'mem.[device.max.speed.{#SNMPINDEX}]'
+              delay: 1h
+              units: Hz
+              description: |
+                This attribute defines the maximum capable speed
+                in megahertz (MHz) of the memory device.  Zero indicates an unknown speed.
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '1000000'
+              tags:
+                -
+                  tag: component
+                  value: memory
+                -
+                  tag: component
+                  value: '{#MEMORY}'
+            -
+              uuid: 87e806d6006641b48be60032e216e828
+              name: '{#MEMORY} : Device Operating Speed'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.50.1.27.1.{#SNMPINDEX}'
+              key: 'mem.[device.operating.speed.{#SNMPINDEX}]'
+              units: Hz
+              description: |
+                This attribute defines the current operating speed
+                in megahertz (MHz) of the memory device.  Zero indicates an unknown speed.
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '1000000'
+              tags:
+                -
+                  tag: component
+                  value: memory
+                -
+                  tag: component
+                  value: '{#MEMORY}'
+            -
+              uuid: 7a35d6cae90c40a390f58cbe92c33c29
+              name: '{#MEMORY} : Device Size'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.50.1.14.1.{#SNMPINDEX}'
+              key: 'mem.[device.size.{#SNMPINDEX}]'
+              delay: 1h
+              units: B
+              description: |
+                This attribute defines the size in KBytes of the
+                memory device.  Zero indicates no memory installed;2,147,483,647 indicates
+                an unknown memory size.
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '1000'
+                -
+                  type: NOT_MATCHES_REGEX
+                  parameters:
+                    - '2147483647'
+              tags:
+                -
+                  tag: component
+                  value: memory
+                -
+                  tag: component
+                  value: '{#MEMORY}'
+            -
+              uuid: 9e0589724fe54aea93b01306fddf6d00
+              name: '{#MEMORY} : Device State Setting'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.50.1.4.1.{#SNMPINDEX}'
+              key: 'mem.[device.state.setting.{#SNMPINDEX}]'
+              description: |
+                This attribute defines the state settings of the
+                memory device.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2:: memoryDeviceStateSettings'
+              tags:
+                -
+                  tag: component
+                  value: memory
+                -
+                  tag: component
+                  value: '{#MEMORY}'
+            -
+              uuid: f66f03c0beda4b01b78ab8e97cdbb5a0
+              name: '{#MEMORY} : Device Status'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.50.1.2.1.{#SNMPINDEX}'
+              key: 'mem.[device.status.{#SNMPINDEX}]'
+              description: 'This attribute defines the status of the memory device.'
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::ObjectStatusEnum'
+              tags:
+                -
+                  tag: component
+                  value: memory
+                -
+                  tag: component
+                  value: '{#MEMORY}'
+            -
+              uuid: 6a9761f075614850b2f6b113fb4a037d
+              name: '{#MEMORY} : Device Type'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.50.1.7.1.{#SNMPINDEX}'
+              key: 'mem.[device.type.{#SNMPINDEX}]'
+              description: 'This attribute defines the type of the memory device.'
+              valuemap:
+                name: 'IDRAC-MIB-SNMPv2::DeviceType'
+              tags:
+                -
+                  tag: component
+                  value: memory
+                -
+                  tag: component
+                  value: '{#MEMORY}'
+            -
+              uuid: 67b659f122af492fb106052956279415
+              name: '{#MEMORY} : Manufacturer'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.50.1.21.1.{#SNMPINDEX}'
+              key: 'mem.[manufacturer.{#SNMPINDEX}]'
+              delay: 1h
+              trends: '0'
+              value_type: CHAR
+              description: |
+                This attribute defines the brand of the
+                processor device.
+              tags:
+                -
+                  tag: component
+                  value: memory
+                -
+                  tag: component
+                  value: '{#MEMORY}'
+            -
+              uuid: c910b211f6e84ee1b72a07de95cb9325
+              name: '{#MEMORY} : Part Number'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.50.1.22.1.{#SNMPINDEX}'
+              key: 'mem.[part.number.{#SNMPINDEX}]'
+              delay: 1h
+              trends: '0'
+              value_type: CHAR
+              description: |
+                This attribute defines the family of the
+                processor device.
+              tags:
+                -
+                  tag: component
+                  value: memory
+                -
+                  tag: component
+                  value: '{#MEMORY}'
+            -
+              uuid: 03e93d5d59e34e98921f31a138a47780
+              name: '{#MEMORY} : Serial Number'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.50.1.23.1.{#SNMPINDEX}'
+              key: 'mem.[serial.number.{#SNMPINDEX}]'
+              delay: 1h
+              trends: '0'
+              value_type: CHAR
+              description: |
+                This attribute defines the family of the
+                processor device.
+              tags:
+                -
+                  tag: component
+                  value: memory
+                -
+                  tag: component
+                  value: '{#MEMORY}'
+        -
+          uuid: 80db0becd4704df4a41fbf5193d20804
+          name: 'Network Discovery'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},1.3.6.1.4.1.674.10892.5.4.1100.90.1.2.1,{#NETDEVICE},1.3.6.1.4.1.674.10892.5.4.1100.90.1.30.1]'
+          key: network.discovery
+          delay: 1h
+          description: 'IDRAC-MIB-SMIv2::Network Device Table'
+          item_prototypes:
+            -
+              uuid: 32b471d6a5ae431fafa0c3bea40acd9f
+              name: '{#NETDEVICE} : Vendor Name'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.90.1.7.1.{#SNMPINDEX}'
+              key: 'network.device.[vendor.{#SNMPINDEX}]'
+              delay: 1h
+              trends: '0'
+              value_type: CHAR
+              description: |
+                This attribute defines the name of the vendor of the
+                network device.
+              tags:
+                -
+                  tag: component
+                  value: network
+            -
+              uuid: 136f03b5957d4906a1f9fe4d5405c730
+              name: '{#NETDEVICE} : Device Connection Status'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.90.1.4.1.{#SNMPINDEX}'
+              key: 'network.device[connection.status.{#SNMPINDEX}]'
+              description: |
+                This attribute defines the connection status of the
+                network device.
+              valuemap:
+                name: 'IDRAC-MIB-SNMPv2::NetworkDeviceConnectionStatusEnum'
+              tags:
+                -
+                  tag: component
+                  value: network
+            -
+              uuid: edf374a9367448e0a074bc1df7a4d0cf
+              name: '{#NETDEVICE} : Current MAC Address'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.90.1.15.1.{#SNMPINDEX}'
+              key: 'network.device[current.mac{#SNMPINDEX}]'
+              trends: '0'
+              value_type: CHAR
+              description: |
+                This attribute defines the product name of the
+                network device.
+              tags:
+                -
+                  tag: component
+                  value: mac
+                -
+                  tag: component
+                  value: network
+            -
+              uuid: 7964b5a6eec3426c9d0387ef643c4f0b
+              name: '{#NETDEVICE} : PCI Bus Number'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.90.1.17.1.{#SMPINDEX}'
+              key: 'network.device[pci.bus{#SNMPINDEX}]'
+              delay: 1h
+              description: |
+                This attribute defines the PCI bus number of the
+                network device.
+              tags:
+                -
+                  tag: component
+                  value: network
+            -
+              uuid: 5812608754d2497981f2d109db72c147
+              name: '{#NETDEVICE} : Permanent MAC Address'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.90.1.16.1.{#SNMPINDEX}'
+              key: 'network.device[permanent.mac.{#SNMPINDEX}]'
+              delay: 1h
+              trends: '0'
+              value_type: CHAR
+              description: |
+                This attribute defines the permanent MAC address of the
+                network device.
+              tags:
+                -
+                  tag: component
+                  value: mac
+                -
+                  tag: component
+                  value: network
+            -
+              uuid: 8798eca4f2bd49c99d557139772f8954
+              name: '{#NETDEVICE} : Device Status'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.90.1.3.1.{#SNMPINDEX}'
+              key: 'network.device[status.{#SNMPINDEX}]'
+              description: 'This attribute defines the status of the network device'
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::StatusProbeEnum'
+              tags:
+                -
+                  tag: component
+                  value: network
+        -
+          uuid: d3af8ee1b8c849cd9a4294aa1684745e
+          name: 'PCIe Discovery'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},1.3.6.1.4.1.674.10892.5.4.1100.80.1.2.1,{#PCIE_DESCR},1.3.6.1.4.1.674.10892.5.4.1100.80.1.12.1]'
+          key: pcie.discovery
+          delay: 1h
+          description: 'IDRAC-MIB-SMIv2::PCIe Table'
+          item_prototypes:
+            -
+              uuid: 70df3da0d8d84a339d46ac6340ac22d3
+              name: '{#PCIE_DESCR} : Data Bus Width'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.80.1.7.1.{#SNMPINDEX}'
+              key: 'pcie.device[databuswidth.{#SNMPINDEX}]'
+              tags:
+                -
+                  tag: component
+                  value: pcie
+            -
+              uuid: 6dd4eb767ca142fb84f6cf4593ae61e2
+              name: '{#PCIE_DESCR} : Description'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.80.1.9.1.{#SNMPINDEX}'
+              key: 'pcie.device[descr.{#SNMPINDEX}]'
+              delay: 1h
+              trends: '0'
+              value_type: CHAR
+              tags:
+                -
+                  tag: component
+                  value: pcie
+            -
+              uuid: ed50e025c49143b5983cfed5a325bd03
+              name: '{#PCIE_DESCR} : Manufacturer'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.80.1.8.1.{#SNMPINDEX}'
+              key: 'pcie.device[manufacturer.{#SNMPINDEX}]'
+              delay: 1h
+              trends: '0'
+              value_type: CHAR
+              tags:
+                -
+                  tag: component
+                  value: pcie
+            -
+              uuid: 9a004e07741a46f5b01925ba8e332416
+              name: '{#PCIE_DESCR} : State Setting'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.80.1.4.1.{#SNMPINDEX}'
+              key: 'pcie.device[state.setting.{#SNMPINDEX}]'
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::StateSettingsFlags'
+              tags:
+                -
+                  tag: component
+                  value: pcie
+            -
+              uuid: a5a34262a309466491f5dd7c351bdde9
+              name: '{#PCIE_DESCR} : Status'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.80.1.5.1.{#SNMPINDEX}'
+              key: 'pcie.device[status.{#SNMPINDEX}]'
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::StatusProbeEnum'
+              tags:
+                -
+                  tag: component
+                  value: pcie
+        -
+          uuid: 8f058e246828475c9fbf8f5eca822685
+          name: 'Array Controller Discovery'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},1.3.6.1.4.1.674.10892.5.5.1.20.130.1.1.38,{#CNTLR_NAME},1.3.6.1.4.1.674.10892.5.5.1.20.130.1.1.79]'
+          key: physicaldisk.arr.discovery
+          delay: 1h
+          description: 'IDRAC-MIB-SMIv2::controllerTable'
+          item_prototypes:
+            -
+              uuid: 9eaa0df462d047c5b3aa3b13b23281e2
+              name: '{#CNTLR_NAME}: Cache Size In MB'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.1.1.9.{#SNMPINDEX}'
+              key: 'system.hw.diskarray.[CacheSizeInMB.{#SNMPINDEX}]'
+              delay: 1d
+              trends: '0'
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                The controller's current amount of cache memory in megabytes
+              tags:
+                -
+                  tag: component
+                  value: array
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+            -
+              uuid: 80b62af0182e4f7fa1ebd697a1e96c77
+              name: '{#CNTLR_NAME}: Disk array controller status'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.1.1.38.{#SNMPINDEX}'
+              key: 'system.hw.diskarray.[controllerComponentStatus.{#SNMPINDEX}]'
+              history: 1w
+              trends: '0'
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                The status of the controller itself without the propagation of any contained component status.
+                Possible values:
+                1: Other
+                2: Unknown
+                3: OK
+                4: Non-critical
+                5: Critical
+                6: Non-recoverable
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::ObjectStatusEnum'
+              tags:
+                -
+                  tag: component
+                  value: array
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+              trigger_prototypes:
+                -
+                  uuid: 104031c8b67d4c62afb176b6c4f3d86a
+                  expression: 'count(/Dell iDRAC by SNMP -Commtel/system.hw.diskarray.[controllerComponentStatus.{#SNMPINDEX}],#1,"eq","{$DISK_ARRAY_CRIT_STATUS:\"critical\"}")=1'
+                  name: '{#CNTLR_NAME}: Disk array controller is in critical state'
+                  opdata: 'Current state: {ITEM.LASTVALUE1}'
+                  priority: HIGH
+                  description: 'Please check the device for faults'
+                  dependencies:
+                    -
+                      name: '{#CNTLR_NAME}: Disk array controller is in unrecoverable state!'
+                      expression: 'count(/Dell iDRAC by SNMP -Commtel/system.hw.diskarray.[controllerComponentStatus.{#SNMPINDEX}],#1,"eq","{$DISK_ARRAY_FAIL_STATUS:\"nonRecoverable\"}")=1'
+                  tags:
+                    -
+                      tag: scope
+                      value: availability
+                    -
+                      tag: scope
+                      value: performance
+                -
+                  uuid: fb6cd76c152542b58d384a8c644f6188
+                  expression: 'count(/Dell iDRAC by SNMP -Commtel/system.hw.diskarray.[controllerComponentStatus.{#SNMPINDEX}],#1,"eq","{$DISK_ARRAY_FAIL_STATUS:\"nonRecoverable\"}")=1'
+                  name: '{#CNTLR_NAME}: Disk array controller is in unrecoverable state!'
+                  opdata: 'Current state: {ITEM.LASTVALUE1}'
+                  priority: DISASTER
+                  description: 'Please check the device for faults'
+                  tags:
+                    -
+                      tag: scope
+                      value: availability
+                    -
+                      tag: scope
+                      value: performance
+                -
+                  uuid: bd65afc9780347669efcf3241c7ab796
+                  expression: 'count(/Dell iDRAC by SNMP -Commtel/system.hw.diskarray.[controllerComponentStatus.{#SNMPINDEX}],#1,"eq","{$DISK_ARRAY_WARN_STATUS:\"nonCritical\"}")=1'
+                  name: '{#CNTLR_NAME}: Disk array controller is in warning state'
+                  opdata: 'Current state: {ITEM.LASTVALUE1}'
+                  priority: AVERAGE
+                  description: 'Please check the device for faults'
+                  dependencies:
+                    -
+                      name: '{#CNTLR_NAME}: Disk array controller is in critical state'
+                      expression: 'count(/Dell iDRAC by SNMP -Commtel/system.hw.diskarray.[controllerComponentStatus.{#SNMPINDEX}],#1,"eq","{$DISK_ARRAY_CRIT_STATUS:\"critical\"}")=1'
+                    -
+                      name: '{#CNTLR_NAME}: Disk array controller is in unrecoverable state!'
+                      expression: 'count(/Dell iDRAC by SNMP -Commtel/system.hw.diskarray.[controllerComponentStatus.{#SNMPINDEX}],#1,"eq","{$DISK_ARRAY_FAIL_STATUS:\"nonRecoverable\"}")=1'
+                  tags:
+                    -
+                      tag: scope
+                      value: availability
+                    -
+                      tag: scope
+                      value: performance
+            -
+              uuid: f4952005e0a84bb8a9fabdbef9faa2c6
+              name: '{#CNTLR_NAME}: Disk array controller model'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.1.1.2.{#SNMPINDEX}'
+              key: 'system.hw.diskarray.[controllerName.{#SNMPINDEX}]'
+              delay: 1d
+              trends: '0'
+              value_type: CHAR
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                The controller's name as represented in Storage Management.
+              tags:
+                -
+                  tag: component
+                  value: array
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+            -
+              uuid: 762d978a29844bbf8e104d572c8f0d2c
+              name: '{#CNTLR_NAME}: Driver Version'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.1.1.41.{#SNMPINDEX}'
+              key: 'system.hw.diskarray.[DriverVersion.{#SNMPINDEX}]'
+              delay: 1d
+              trends: '0'
+              value_type: CHAR
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                The controller's current firmware version
+              tags:
+                -
+                  tag: component
+                  value: array
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+            -
+              uuid: 695d900274c2493287f13c947779aa4a
+              name: '{#CNTLR_NAME}: FW Version'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.1.1.8.{#SNMPINDEX}'
+              key: 'system.hw.diskarray.[FWVersion.{#SNMPINDEX}]'
+              delay: 1d
+              trends: '0'
+              value_type: CHAR
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                The controller's current firmware version
+              tags:
+                -
+                  tag: component
+                  value: array
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+            -
+              uuid: b26f905675a84007b49fe95b2d8f6acc
+              name: '{#CNTLR_NAME}: PCISlot'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.1.1.42.{#SNMPINDEX}'
+              key: 'system.hw.diskarray.[PCISlot.{#SNMPINDEX}]'
+              delay: 1d
+              trends: '0'
+              value_type: CHAR
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                The controller's current firmware version
+              tags:
+                -
+                  tag: component
+                  value: array
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+        -
+          uuid: e26f67ebb8d6410db9bfc5c85c9ad16d
+          name: 'Physical Disk Discovery'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.1,{#DISK_NAME},1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.2]'
+          key: physicaldisk.discovery
+          delay: 1h
+          description: 'IDRAC-MIB-SMIv2::physicalDiskTable'
+          item_prototypes:
+            -
+              uuid: 76491da64d3142eab0a191628f621b33
+              name: '{#DISK_NAME}: Block Size'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.58.{#SNMPINDEX}'
+              key: 'system.hw.physicaldisk[BlockSize.{#SNMPINDEX}]'
+              delay: 1h
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                
+                  The block size (in bytes) of the physical disk. This is not
+                applicable for NVMe devices.
+                1:512.
+                2:4096
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: disk
+                  value: '{#DISK_NAME}'
+            -
+              uuid: 8887eedec62b4218b626d57be77ef255
+              name: '{#DISK_NAME}: Physical disk Bus Type'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.21.{#SNMPINDEX}'
+              key: 'system.hw.physicaldisk[BusType.{#SNMPINDEX}]'
+              delay: 1h
+              history: 2w
+              trends: '0'
+              value_type: CHAR
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                The bus type of the physical disk.
+                Possible values:
+                1:The bus type could not be determined.
+                2:Small Computer System Interface (SCSI).
+                3:Serial Attached SCSI (SAS).
+                4:Serial Advanced Technology Attachment (SATA).
+                5:Fibre channel.
+                6:PCIe.
+                7:NVMe.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2:: physicalDiskBusType'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: disk
+                  value: '{#DISK_NAME}'
+            -
+              uuid: 54e579e24a584f46b555c63acc4f3b69
+              name: '{#DISK_NAME}: Disk size'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.11.{#SNMPINDEX}'
+              key: 'system.hw.physicaldisk[CapacityinMB.{#SNMPINDEX}]'
+              delay: 1h
+              history: 2w
+              trends: '0'
+              units: B
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                The size of the physical disk in megabytes.
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '1048576'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: disk
+                  value: '{#DISK_NAME}'
+            -
+              uuid: cbaff138beb54cbb8888d3c42733c0b8
+              name: '{#DISK_NAME}: Physical disk status'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.24.{#SNMPINDEX}'
+              key: 'system.hw.physicaldisk[ComponentStatus.{#SNMPINDEX}]'
+              delay: 3m
+              trends: '0'
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                The status of the physical disk itself without the propagation of any contained component status.
+                Possible values:
+                1: Other
+                2: Unknown
+                3: OK
+                4: Non-critical
+                5: Critical
+                6: Non-recoverable
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::physicalDiskComponentStatus'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: disk
+                  value: '{#DISK_NAME}'
+              trigger_prototypes:
+                -
+                  uuid: 2eeab7f7227b44b48527b60a28861c88
+                  expression: 'count(/Dell iDRAC by SNMP -Commtel/system.hw.physicaldisk[ComponentStatus.{#SNMPINDEX}],#1,"eq","{$DISK_FAIL_STATUS:\"critical\"}")=1 or count(/Dell iDRAC by SNMP -Commtel/system.hw.physicaldisk[ComponentStatus.{#SNMPINDEX}],#1,"eq","{$DISK_FAIL_STATUS:\"nonRecoverable\"}")=1'
+                  name: '{#DISK_NAME}: Physical disk failed'
+                  opdata: 'Current status: {ITEM.LASTVALUE1}'
+                  priority: HIGH
+                  description: 'Please check physical disk for warnings or errors'
+                  tags:
+                    -
+                      tag: scope
+                      value: availability
+                    -
+                      tag: scope
+                      value: performance
+                -
+                  uuid: 1e8b6ff7648c49cf93a1c7bf50019cbc
+                  expression: 'count(/Dell iDRAC by SNMP -Commtel/system.hw.physicaldisk[ComponentStatus.{#SNMPINDEX}],#1,"eq","{$DISK_WARN_STATUS:\"nonCritical\"}")=1'
+                  name: '{#DISK_NAME}: Physical disk is in warning state'
+                  opdata: 'Current state: {ITEM.LASTVALUE1}'
+                  priority: WARNING
+                  description: 'Please check physical disk for warnings or errors'
+                  dependencies:
+                    -
+                      name: '{#DISK_NAME}: Physical disk failed'
+                      expression: 'count(/Dell iDRAC by SNMP -Commtel/system.hw.physicaldisk[ComponentStatus.{#SNMPINDEX}],#1,"eq","{$DISK_FAIL_STATUS:\"critical\"}")=1 or count(/Dell iDRAC by SNMP -Commtel/system.hw.physicaldisk[ComponentStatus.{#SNMPINDEX}],#1,"eq","{$DISK_FAIL_STATUS:\"nonRecoverable\"}")=1'
+                  tags:
+                    -
+                      tag: scope
+                      value: availability
+                    -
+                      tag: scope
+                      value: performance
+            -
+              uuid: 29076105fb4b4fe3939c2e6163d9c79f
+              name: '{#DISK_NAME}: Data Integrity Capability'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.57.{#SNMPINDEX}'
+              key: 'system.hw.physicaldisk[DataIntegrityCapability.{#SNMPINDEX}]'
+              delay: 1h
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                
+                 Indicates whether the physical disk supports the T10 PI (Protection
+                Information). These protection fields are known as DIF
+                (Data Integrity Fields).
+                Possible values:
+                1:Not one of the following.
+                2:Capable of supporting T10 PI.
+                3:Not capable of supporting T10 PI.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2:: physicalDiskT10PICapability'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: disk
+                  value: '{#DISK_NAME}'
+            -
+              uuid: bb4a42c7e03a4b0ab89d62db7d2fb0d4
+              name: '{#DISK_NAME}: Disk Progress'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.51.{#SNMPINDEX}'
+              key: 'system.hw.physicaldisk[DiskProgress.{#SNMPINDEX}]'
+              delay: 5m
+              units: '%'
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                
+                 The progress percentage of the operation that is being
+                performed on the physical disk. This is applicable
+                only if there is a progressive operations ongoing
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: disk
+                  value: '{#DISK_NAME}'
+            -
+              uuid: 54b2df1accff45a0b4f055d11a32d9a4
+              name: '{#DISK_NAME}: Disk State'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.4.{#SNMPINDEX}'
+              key: 'system.hw.physicaldisk[DiskState.{#SNMPINDEX}]'
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                The current state of this physical disk.
+                Possible states:
+                1:The current state could not be determined.
+                2:The physical disk is available for use, but no RAID configuration
+                has been assigned.
+                3:A RAID configuration has been assigned to the physical disk.
+                4:The physical disk has been moved from another
+                controller and contains all or some portion of a virtual disk.
+                5:The physical disk is not available to the RAID
+                controller.
+                6:The physical disk is currently blocked by
+                controller.
+                7:The physical disk is not operational.
+                8:The physical disk is not a RAID capable disk
+                9:The physical disk has been removed.
+                10:The physical disk media has been placed in read only mode.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::physicalDiskState'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: disk
+                  value: '{#DISK_NAME}'
+            -
+              uuid: ff9f3337d16a4e2797995ee140209429
+              name: '{#DISK_NAME}: Form Factor'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.53.{#SNMPINDEX}'
+              key: 'system.hw.physicaldisk[FormFactor.{#SNMPINDEX}]'
+              delay: 1h
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                
+                The form factor of the physical disk.
+                Possible values:
+                1:The form factor could not be determined.
+                2:1.8 inch.
+                3:2.5 inch.
+                4:3.5 inch.
+                5:EDSFFE1.L.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2:: physicalDiskFormFactor'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: disk
+                  value: '{#DISK_NAME}'
+            -
+              uuid: 79415aebb07442e7a508a895075fa696
+              name: '{#DISK_NAME}: Free Space'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.19.{#SNMPINDEX}'
+              key: 'system.hw.physicaldisk[FreeSpaceinMB.{#SNMPINDEX}]'
+              delay: 15m
+              trends: '0'
+              units: B
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                 The amount of free space in megabytes on the physical
+                disk. This is not applicable for NVMe devices.
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '1048576'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: disk
+                  value: '{#DISK_NAME}'
+            -
+              uuid: e9ce2a43b6494e28add1b6fecbfa5632
+              name: '{#DISK_NAME}: Disk Manufacturer'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.3.{#SNMPINDEX}'
+              key: 'system.hw.physicaldisk[Manufacturer.{#SNMPINDEX}]'
+              delay: 1h
+              history: 2w
+              trends: '0'
+              value_type: CHAR
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                 The name of the physical disk's manufacturer.
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: disk
+                  value: '{#DISK_NAME}'
+            -
+              uuid: f9bb9ebba8804002bd32e1e5970430d4
+              name: '{#DISK_NAME}: Physical disk media type'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.35.{#SNMPINDEX}'
+              key: 'system.hw.physicaldisk[MediaType.{#SNMPINDEX}]'
+              delay: 1h
+              history: 2w
+              trends: '0'
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                The media type of the physical disk. Possible Values:
+                1: The media type could not be determined.
+                2: Hard Disk Drive (HDD).
+                3: Solid State Drive (SSD).
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::physicalDiskMediaType'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: disk
+                  value: '{#DISK_NAME}'
+            -
+              uuid: 90718e5848a94872a7df8fa51358578b
+              name: '{#DISK_NAME}: Negotiated Speed'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.29.{#SNMPINDEX}'
+              key: 'system.hw.physicaldisk[NegotiatedSpeed.{#SNMPINDEX}]'
+              delay: 15m
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                
+                 The data transfer speed that the disk negotiated while spinning up
+                in Gigbits per second (Gbps).
+                Possible values:
+                1:The speed could not be determined.
+                2. 1.5 Gbps
+                3:3.0 Gbps
+                4:6.0 Gbps
+                5:12.0 Gbps
+                6:5 GT/s (applicable for NVMe devices).
+                7:8 GT/s (applicable for NVMe devices).
+                8:16 GT/s (applicable for NVMe devices).
+                9:32 GT/s (applicable for NVMe devices).
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::physicalDiskNegotiatedSpeed'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: disk
+                  value: '{#DISK_NAME}'
+            -
+              uuid: 31ef97cd437d418fae52f69dde284646
+              name: '{#DISK_NAME}: Operational State'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.50.{#SNMPINDEX}'
+              key: 'system.hw.physicaldisk[OperationalState.{#SNMPINDEX}]'
+              delay: 5m
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                
+                 The state of the physical disk when there are progressive
+                operations ongoing.
+                Possible values:
+                1:There is no active operation running.
+                2:Data from a redundant virtual disk is
+                currently being rebuilt onto the physical disk.
+                3:Data on the disk is being erased.
+                4:Data is being copied from a hot spare disk to
+                the physical disk or vice versa.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2:: physicalDiskOperationalState'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: disk
+                  value: '{#DISK_NAME}'
+            -
+              uuid: b525c5afed754742a1a5a6c357710f9f
+              name: '{#DISK_NAME}: Physical disk part number'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.27.{#SNMPINDEX}'
+              key: 'system.hw.physicaldisk[PartNumber.{#SNMPINDEX}]'
+              delay: 1h
+              history: 2w
+              trends: '0'
+              value_type: CHAR
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                The part number of the disk.
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: disk
+                  value: '{#DISK_NAME}'
+            -
+              uuid: 05d801af0167482cb4575de4daee8972
+              name: '{#DISK_NAME}: PCIe Capable Link Width'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.61.{#SNMPINDEX}'
+              key: 'system.hw.physicaldisk[PCIeCapableLinkWidth.{#SNMPINDEX}]'
+              delay: 1h
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                
+                Applicable for NVMe devices  only. The PCIe link width negotiated with the host
+                during device initialization.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2:: physicalDiskPCIeNegotiatedLinkWidth'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: disk
+                  value: '{#DISK_NAME}'
+            -
+              uuid: 57581456723344248e958d586fb035a1
+              name: '{#DISK_NAME}: PCIe Negotiated Link Width'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.60.{#SNMPINDEX}'
+              key: 'system.hw.physicaldisk[PCIeNegotiatedLinkWidth.{#SNMPINDEX}]'
+              delay: 1h
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                
+                Applicable for NVMe devices  only. The PCIe link width negotiated with the host
+                during device initialization.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2:: physicalDiskPCIeNegotiatedLinkWidth'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: disk
+                  value: '{#DISK_NAME}'
+            -
+              uuid: d102f31617c44084a09aa3f5a833c523
+              name: '{#DISK_NAME}: Power State'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.42.{#SNMPINDEX}'
+              key: 'system.hw.physicaldisk[PowerState.{#SNMPINDEX}]'
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                
+                 
+                 The power state of the physical disk.
+                Possible Values:
+                1:Not one of the following.
+                2:The physical disk is in the spun up state.
+                3:The physical disk is in the spun down state.
+                4:The physical disk is changing from spun down state
+                to spun up state or vice versa.
+                5:The Solid State Device (SSD) is powered on.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2:: physicalDiskPowerState'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: disk
+                  value: '{#DISK_NAME}'
+            -
+              uuid: a33c785ff45348628b1dba20e037f5be
+              name: '{#DISK_NAME}: Physical disk model name'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.6.{#SNMPINDEX}'
+              key: 'system.hw.physicaldisk[ProductID.{#SNMPINDEX}]'
+              delay: 1h
+              history: 2w
+              trends: '0'
+              value_type: CHAR
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                The model number of the physical disk.
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: disk
+                  value: '{#DISK_NAME}'
+            -
+              uuid: dd8f616ca5964afaa0cf7cb07edc12b7
+              name: '{#DISK_NAME}: Protocol Version'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.59.{#SNMPINDEX}'
+              key: 'system.hw.physicaldisk[ProtocolVersion.{#SNMPINDEX}]'
+              delay: 1h
+              trends: '0'
+              value_type: CHAR
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                
+                Applicable for NVMe devices only. The NVMe protocol version supported
+                by the device.
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: disk
+                  value: '{#DISK_NAME}'
+            -
+              uuid: 16d09336177b44e087a70490ddd93e28
+              name: '{#DISK_NAME}: Remaining Rated Write Endurance'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.49.{#SNMPINDEX}'
+              key: 'system.hw.physicaldisk[RemainingRatedWriteEndurance.{#SNMPINDEX}]'
+              delay: 3m
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                 This property is applicable to SSD media type only. This indicates
+                the wear-out percentage of the SSD. Typically it is a value between
+                0 to 100. However, if the value is not available or not applicable
+                (in the case of HDD media type) the value will be 255.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::RemainingRatedWriteEndurance'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: disk
+                  value: '{#DISK_NAME}'
+            -
+              uuid: b9ab647d17cd41ed839766c98900bdb9
+              name: '{#DISK_NAME}: Security Status'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.52.{#SNMPINDEX}'
+              key: 'system.hw.physicaldisk[SecurityStatus.{#SNMPINDEX}]'
+              delay: 5m
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                
+                 The security/encryption status of the physical disk.
+                Possible Values:
+                1:The physical disk supports encryption.
+                2:The physical disk does not support encryption
+                3:The physical disk is encrypted.
+                4:The physical disk is locked by a key.
+                5:The physical disk is locked by a foreign key.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2:: physicalDiskSecurityStatus'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: disk
+                  value: '{#DISK_NAME}'
+            -
+              uuid: 160333b245e8466d8f1be041b55c1a74
+              name: '{#DISK_NAME}: Physical disk serial number'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.7.{#SNMPINDEX}'
+              key: 'system.hw.physicaldisk[SerialNo.{#SNMPINDEX}]'
+              delay: 1d
+              trends: '0'
+              value_type: CHAR
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                The physical disk's unique identification number from the manufacturer.
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: disk
+                  value: '{#DISK_NAME}'
+              trigger_prototypes:
+                -
+                  uuid: a42b1ff18d3842e384317d5597498e98
+                  expression: 'last(/Dell iDRAC by SNMP -Commtel/system.hw.physicaldisk[SerialNo.{#SNMPINDEX}],#1)<>last(/Dell iDRAC by SNMP -Commtel/system.hw.physicaldisk[SerialNo.{#SNMPINDEX}],#2) and length(last(/Dell iDRAC by SNMP -Commtel/system.hw.physicaldisk[SerialNo.{#SNMPINDEX}]))>0'
+                  name: '{#DISK_NAME}: Disk has been replaced'
+                  event_name: '{#DISK_NAME}: Disk has been replaced (new serial number received)'
+                  priority: INFO
+                  description: 'Disk serial number has changed. Ack to close'
+                  tags:
+                    -
+                      tag: scope
+                      value: notice
+            -
+              uuid: 08e95576404947cda4ffe41341c1f784
+              name: '{#DISK_NAME}: Physical disk S.M.A.R.T. status'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.31.{#SNMPINDEX}'
+              key: 'system.hw.physicaldisk[SmartAlertIndication.{#SNMPINDEX}]'
+              delay: 3m
+              trends: '0'
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                Indicates whether the physical disk has received a predictive failure alert.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::BooleanType'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: disk
+                  value: '{#DISK_NAME}'
+              trigger_prototypes:
+                -
+                  uuid: bf9313dca7774704a64fbbc526a6d937
+                  expression: 'count(/Dell iDRAC by SNMP -Commtel/system.hw.physicaldisk[SmartAlertIndication.{#SNMPINDEX}],#1,"eq","{$DISK_SMART_FAIL_STATUS}")=1'
+                  name: '{#DISK_NAME}: Physical disk S.M.A.R.T. failed'
+                  opdata: 'Current state: {ITEM.LASTVALUE1}'
+                  priority: HIGH
+                  description: 'Disk probably requires replacement.'
+                  dependencies:
+                    -
+                      name: '{#DISK_NAME}: Physical disk failed'
+                      expression: 'count(/Dell iDRAC by SNMP -Commtel/system.hw.physicaldisk[ComponentStatus.{#SNMPINDEX}],#1,"eq","{$DISK_FAIL_STATUS:\"critical\"}")=1 or count(/Dell iDRAC by SNMP -Commtel/system.hw.physicaldisk[ComponentStatus.{#SNMPINDEX}],#1,"eq","{$DISK_FAIL_STATUS:\"nonRecoverable\"}")=1'
+                  tags:
+                    -
+                      tag: scope
+                      value: availability
+                    -
+                      tag: scope
+                      value: performance
+            -
+              uuid: d4a22aac5acd49df8c2e51b14003d1be
+              name: '{#DISK_NAME}: Used Space'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.17.{#SNMPINDEX}'
+              key: 'system.hw.physicaldisk[UsedSpaceinMB.{#SNMPINDEX}]'
+              delay: 15m
+              trends: '0'
+              units: B
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                 The amount of used space in megabytes on the physical
+                disk. This is not applicable for NVMe devices.
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '1048576'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: disk
+                  value: '{#DISK_NAME}'
+        -
+          uuid: e140a207b4084d59bbd9995d6dce5edb
+          name: 'Processor Discovery'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},1.3.6.1.4.1.674.10892.5.4.1100.30.1.1.1,{#PROC_LOCATE},1.3.6.1.4.1.674.10892.5.4.1100.30.1.26.1]'
+          key: processor.discovery
+          delay: 1h
+          description: 'IDRAC-MIB-SMIv2::ProcessorDeviceTable'
+          item_prototypes:
+            -
+              uuid: ac2710e108b8495c83c978c2981de7d5
+              name: '{#PROC_LOCATE} : Processor Core Count'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.30.1.17.1.{#SNMPINDEX}'
+              key: 'proc.[core.count.{#SNMPINDEX}]'
+              delay: 1h
+              description: |
+                This attribute defines the number of processor cores
+                detected for the processor device.
+              tags:
+                -
+                  tag: component
+                  value: processor
+                -
+                  tag: component
+                  value: '{PROC_LOCATE}'
+            -
+              uuid: 39a32dfccb3d4a64a7c058c2f23a65f9
+              name: '{#PROC_LOCATE} : Processor Core Enabled Count'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.30.1.18.1.{#SNMPINDEX}'
+              key: 'proc.[core.enabled.count.{#SNMPINDEX}]'
+              delay: 1h
+              description: |
+                This attribute defines the number of processor cores
+                enabled for the processor device.
+              tags:
+                -
+                  tag: component
+                  value: processor
+                -
+                  tag: component
+                  value: '{PROC_LOCATE}'
+            -
+              uuid: 7bea12c60b3d4d5d8cfc453706275693
+              name: '{#PROC_LOCATE} : Processor Current Speed'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.30.1.12.1.{#SNMPINDEX}'
+              key: 'proc.[current.speed.{#SNMPINDEX}]'
+              units: MHz
+              description: |
+                This attribute defines the current speed of the
+                processor device in MHz.  Zero indicates the current speed is unknown.
+              tags:
+                -
+                  tag: component
+                  value: processor
+                -
+                  tag: component
+                  value: '{PROC_LOCATE}'
+            -
+              uuid: 72d5bf3348c044de92ad5f457e1b0418
+              name: '{#PROC_LOCATE} : Processor External Clock Speed'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.30.1.13.1.{#SNMPINDEX}'
+              key: 'proc.[external.clock.{#SNMPINDEX}]'
+              units: MHz
+              description: |
+                This attribute defines the speed of the
+                external clock for the processor device in MHz.  Zero indicates
+                the external clock speed is unknown.
+              tags:
+                -
+                  tag: component
+                  value: processor
+                -
+                  tag: component
+                  value: '{PROC_LOCATE}'
+            -
+              uuid: 337c1234c18f49f38143fbfef84c8c10
+              name: '{#PROC_LOCATE} : Processor Max Speed'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.30.1.11.1.{#SNMPINDEX}'
+              key: 'proc.[max.speed.{#SNMPINDEX}]'
+              delay: 1h
+              units: MHz
+              description: |
+                This attribute defines the maximum speed of the
+                processor device in MHz.  Zero indicates the maximum speed is unknown.
+              tags:
+                -
+                  tag: component
+                  value: processor
+                -
+                  tag: component
+                  value: '{PROC_LOCATE}'
+            -
+              uuid: dd857d377ac6495fac0bfde66e9fafe3
+              name: '{#PROC_LOCATE} : Processor Name'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.30.1.23.1.{#SNMPINDEX}'
+              key: 'proc.[name.{#SNMPINDEX}]'
+              delay: 1h
+              trends: '0'
+              value_type: CHAR
+              description: |
+                This attribute defines the brand of the
+                processor device.
+              tags:
+                -
+                  tag: component
+                  value: processor
+                -
+                  tag: component
+                  value: '{PROC_LOCATE}'
+            -
+              uuid: c03c478e8db94b1eb5d389487ae1a56e
+              name: '{#PROC_LOCATE} : Device State Setting'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.30.1.4.1.{#SNMPINDEX}'
+              key: 'proc.[state.setting.{#SNMPINDEX}]'
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::StateSettingsFlags'
+              tags:
+                -
+                  tag: component
+                  value: processor
+                -
+                  tag: component
+                  value: '{PROC_LOCATE}'
+            -
+              uuid: a1018d7c4dc74731aa5adf750982733f
+              name: '{#PROC_LOCATE} : Device Status'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.30.1.5.1.{#SNMPINDEX}'
+              key: 'proc.[status.{#SNMPINDEX}]'
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::StatusProbeEnum'
+              tags:
+                -
+                  tag: component
+                  value: processor
+                -
+                  tag: component
+                  value: '{PROC_LOCATE}'
+            -
+              uuid: dcd43408ef904ea3b1486683dd66a0ac
+              name: '{#PROC_LOCATE} : Processor Thread Count'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.30.1.19.1.{#SNMPINDEX}'
+              key: 'proc.[thread.count.{#SNMPINDEX}]'
+              delay: 1h
+              description: |
+                This attribute defines the number of processor threads
+                detected for the processor device.
+              tags:
+                -
+                  tag: component
+                  value: processor
+                -
+                  tag: component
+                  value: '{PROC_LOCATE}'
+            -
+              uuid: 8abdb9f6a4674697b31d5b92c24dc2ad
+              name: '{#PROC_LOCATE} : Device Type'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.30.1.7.1.{#SNMPINDEX}'
+              key: 'proc.[type.{#SNMPINDEX}]'
+              description: 'This attribute defines the type of the processor device.'
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::ProcesorDeviceType'
+              tags:
+                -
+                  tag: component
+                  value: processor
+                -
+                  tag: component
+                  value: '{PROC_LOCATE}'
+            -
+              uuid: 4f24169c96f94c03bfe6e093a8741df6
+              name: '{#PROC_LOCATE} : Device Voltage'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.1100.30.1.14.1.{#SNMPINDEX}'
+              key: 'proc.[voltage.{#SNMPINDEX}]'
+              delay: 1h
+              units: mV
+              description: |
+                This attribute defines the voltage powering the
+                processor device in millivolts.  Zero indicates the voltage is unknown.
+              tags:
+                -
+                  tag: component
+                  value: processor
+                -
+                  tag: component
+                  value: '{PROC_LOCATE}'
+        -
+          uuid: b7b48496289042309b83f98eabbbcc4c
+          name: 'PSU Discovery'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},1.3.6.1.4.1.674.10892.5.4.600.12.1.1.1.1,{#PSU_DESCR},1.3.6.1.4.1.674.10892.5.4.600.12.1.8]'
+          key: psu.discovery
+          delay: 1h
+          description: 'IDRAC-MIB-SMIv2::powerSupplyTable'
+          item_prototypes:
+            -
+              uuid: 27a399d41c164036b57cce06fb0f91ba
+              name: '{#PSU_DESCR}: Current Input Voltage'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.600.12.1.16.1.{#SNMPINDEX}'
+              key: 'sensor.psu[CurrentInputVoltage.{#SNMPINDEX}]'
+              units: V
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                This attribute defines the current input voltage to the
+                power supply (in Volts).
+              tags:
+                -
+                  tag: component
+                  value: power
+            -
+              uuid: 8e933beb92074cb8bf07e5faf718125e
+              name: '{#PSU_DESCR}: Max Input Voltage'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.600.12.1.9.1.{#SNMPINDEX}'
+              key: 'sensor.psu[MaxInVoltage.{#SNMPINDEX}]'
+              delay: 1h
+              units: V
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                This attribute defines the maximum input voltage of the
+                power supply (in Volts).
+              tags:
+                -
+                  tag: component
+                  value: power
+            -
+              uuid: fa3b04704f1542e68d7b2c2143c71e2b
+              name: '{#PSU_DESCR}: Max Rated Input Wattage'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.600.12.1.14.1.{#SNMPINDEX}'
+              key: 'sensor.psu[MaxRatedInputWatt.{#SNMPINDEX}]'
+              delay: 1h
+              units: W
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                This attribute defines the rated input wattage of the
+                power supply (in tenths of Watts).
+              tags:
+                -
+                  tag: component
+                  value: power
+            -
+              uuid: deb6241e85c946c1b47e0123e2d5c30e
+              name: '{#PSU_DESCR}: Power supply status'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.600.12.1.5.{#SNMPINDEX}'
+              key: 'sensor.psu[powerSupplyStatus.{#SNMPINDEX}]'
+              delay: 3m
+              history: 2w
+              trends: '0'
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                0600.0012.0001.0005 This attribute defines the status of the power supply.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::ObjectStatusEnum'
+              tags:
+                -
+                  tag: component
+                  value: power
+              trigger_prototypes:
+                -
+                  uuid: 9495c361dcff4891a7483a13900e92fe
+                  expression: 'count(/Dell iDRAC by SNMP -Commtel/sensor.psu[powerSupplyStatus.{#SNMPINDEX}],#1,"eq","{$PSU_CRIT_STATUS:\"critical\"}")=1 or count(/Dell iDRAC by SNMP -Commtel/sensor.psu[powerSupplyStatus.{#SNMPINDEX}],#1,"eq","{$PSU_CRIT_STATUS:\"nonRecoverable\"}")=1'
+                  name: '{#PSU_DESCR}: Power supply is in critical state'
+                  opdata: 'Current state: {ITEM.LASTVALUE1}'
+                  priority: AVERAGE
+                  description: 'Please check the power supply unit for errors'
+                  tags:
+                    -
+                      tag: scope
+                      value: availability
+                    -
+                      tag: scope
+                      value: performance
+                -
+                  uuid: 419e92c0cbb741a19b8fc20991e9afa1
+                  expression: 'count(/Dell iDRAC by SNMP -Commtel/sensor.psu[powerSupplyStatus.{#SNMPINDEX}],#1,"eq","{$PSU_WARN_STATUS:\"nonCritical\"}")=1'
+                  name: '{#PSU_DESCR}: Power supply is in warning state'
+                  opdata: 'Current state: {ITEM.LASTVALUE1}'
+                  priority: WARNING
+                  description: 'Please check the power supply unit for errors'
+                  dependencies:
+                    -
+                      name: '{#PSU_DESCR}: Power supply is in critical state'
+                      expression: 'count(/Dell iDRAC by SNMP -Commtel/sensor.psu[powerSupplyStatus.{#SNMPINDEX}],#1,"eq","{$PSU_CRIT_STATUS:\"critical\"}")=1 or count(/Dell iDRAC by SNMP -Commtel/sensor.psu[powerSupplyStatus.{#SNMPINDEX}],#1,"eq","{$PSU_CRIT_STATUS:\"nonRecoverable\"}")=1'
+                  tags:
+                    -
+                      tag: scope
+                      value: availability
+                    -
+                      tag: scope
+                      value: performance
+        -
+          uuid: 2dc03c3c8c814a8ca923aef1296298d4
+          name: 'Power Usage Discovery'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},1.3.6.1.4.1.674.10892.5.4.600.60.1.2.1,{#PSU_DESCR},1.3.6.1.4.1.674.10892.5.4.600.60.1.6.1]'
+          key: psu.usage.discovery
+          delay: 1h
+          description: 'IDRAC-MIB-SMIv2::powerUsageTable'
+          item_prototypes:
+            -
+              uuid: 5ec59c7373424d7d89ca578b6c3b7d4e
+              name: '{#PSU_DESCR} : Cumulative Wattage Start Date'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.10892.5.4.600.60.1.8.1.{#SNMPVALUE}'
+              key: 'psu.usage[Cumulative.Watt.FromDate.{#SNMPVALUE}]'
+              delay: 1h
+              trends: '0'
+              value_type: CHAR
+              description: |
+                This attribute defines the total wattage used
+                This attribute defines the total wattage used
+                (in Watt-hours) by this entity since the date and time specified
+                by the powerUsageCumulativeWattageStartDateName attribute.
+              tags:
+                -
+                  tag: component
+                  value: power
+            -
+              uuid: 49a376d0d71a454e99715e73426ebea6
+              name: '{#PSU_DESCR} : Cumulative Wattage'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.10892.5.4.600.60.1.7.1.{#SNMPVALUE}'
+              key: 'psu.usage[Cumulative.Watt.{#SNMPVALUE}]'
+              units: w
+              description: |
+                This attribute defines the total wattage used
+                (in Watt-hours) by this entity since the date and time specified
+                by the powerUsageCumulativeWattageStartDateName attribute.
+              tags:
+                -
+                  tag: component
+                  value: power
+            -
+              uuid: 188bba98a6554159bef8a48a07dddda0
+              name: '{#PSU_DESCR} : Max Potential Power'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.10892.5.4.600.60.1.16.1.{#SNMPVALUE}'
+              key: 'psu.usage[Max.Potential.Power.{#SNMPVALUE}]'
+              delay: 1h
+              units: W
+              description: |
+                This attribute defines the system maximum potential
+                power (in Watts).  This is the maximum power the system can consume
+                based on the current hardware configuration.
+              tags:
+                -
+                  tag: component
+                  value: power
+            -
+              uuid: 16099d816f314abfbc9adb8869ac02e1
+              name: '{#PSU_DESCR} : Peak Amps Start Date'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.10892.5.4.600.60.1.13.1.{#SNMPVALUE}'
+              key: 'psu.usage[Peak.Amps.FromDate.{#SNMPVALUE}]'
+              delay: 1h
+              trends: '0'
+              value_type: CHAR
+              description: |
+                This attribute defines the date and time at
+                which the data collection started for the value reported by the
+                powerUsagePeakAmps attribute.
+              tags:
+                -
+                  tag: component
+                  value: power
+            -
+              uuid: dfaae75558b547f98bee8c11a9220af7
+              name: '{#PSU_DESCR} : Peak Amps Reading Date'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.10892.5.4.600.60.1.14.1.{#SNMPVALUE}'
+              key: 'psu.usage[Peak.Amps.ReadingDate.{#SNMPVALUE}]'
+              delay: 1h
+              trends: '0'
+              value_type: CHAR
+              description: |
+                This attribute defines the date and time at
+                which the value reported by the powerUsagePeakAmps attribute was
+                measured.
+              tags:
+                -
+                  tag: component
+                  value: power
+            -
+              uuid: e4648ce688b1480ead7190d93d745448
+              name: '{#PSU_DESCR} : Peak Amps'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.10892.5.4.600.60.1.12.1.{#SNMPVALUE}'
+              key: 'psu.usage[Peak.Amps.{#SNMPVALUE}]'
+              units: A
+              description: |
+                This attribute defines the peak amperage reading
+                (in tenths of Amps) for this entity since the date and time specified
+                by the powerUsagePeakAmpsStartDateName attribute
+              tags:
+                -
+                  tag: component
+                  value: power
+            -
+              uuid: 6fde67b7af31423799d9dda2db2779b6
+              name: '{#PSU_DESCR} : Peak Watts Start Date'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.10892.5.4.600.60.1.10.1.{#SNMPVALUE}'
+              key: 'psu.usage[Peak.Watt.FromDate.{#SNMPVALUE}]'
+              delay: 1h
+              trends: '0'
+              value_type: CHAR
+              description: |
+                This attribute defines the date and time at
+                which the data collection started for the value reported by the
+                powerUsagePeakWatts attribute.
+              tags:
+                -
+                  tag: component
+                  value: power
+            -
+              uuid: 97d571008347475fb82b5ff8e2f341fd
+              name: '{#PSU_DESCR} : Peak Watts Reading Date'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.10892.5.4.600.60.1.11.1.{#SNMPVALUE}'
+              key: 'psu.usage[Peak.Watt.ReadingDate.{#SNMPVALUE}]'
+              delay: 1h
+              trends: '0'
+              value_type: CHAR
+              description: |
+                This attribute defines the date and time at
+                which the data collection started for the value reported by the
+                powerUsagePeakWatts attribute.
+              tags:
+                -
+                  tag: component
+                  value: power
+            -
+              uuid: 99fd5b0491ee47bdaf800aefffb7351a
+              name: '{#PSU_DESCR} : Peak Watts'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.10892.5.4.600.60.1.9.1.{#SNMPVALUE}'
+              key: 'psu.usage[Peak.Watt.{#SNMPVALUE}]'
+              units: W
+              description: |
+                This attribute defines the peak wattage reading
+                (in Watts) for this entity since the date and time specified by the
+                powerUsagePeakWattsStartDateName attribute.
+              tags:
+                -
+                  tag: component
+                  value: power
+            -
+              uuid: bd36c527684a473697d9346281cebd8c
+              name: '{#PSU_DESCR} : Power Cap Capabilities'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.10892.5.4.600.60.1.17.1.{#SNMPVALUE}'
+              key: 'psu.usage[Power.Cap.Capabilities.{#SNMPVALUE}]'
+              delay: 1h
+              description: 'This attribute defines the system power cap capabilities.'
+              tags:
+                -
+                  tag: component
+                  value: power
+            -
+              uuid: 6fc90f3cb77646e39a00d0bb838370af
+              name: '{#PSU_DESCR} : Power Cap Settings'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.10892.5.4.600.60.1.18.1.{#SNMPVALUE}'
+              key: 'psu.usage[Power.Cap.Settings.{#SNMPVALUE}]'
+              delay: 1h
+              description: 'This attribute defines the system power cap setting.'
+              tags:
+                -
+                  tag: component
+                  value: power
+            -
+              uuid: cfd45d2636914f3294fd7354e1970eca
+              name: '{#PSU_DESCR} : Power Cap Value'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.10892.5.4.600.60.1.19.1.{#SNMPVALUE}'
+              key: 'psu.usage[Power.Cap.Value.{#SNMPVALUE}]'
+              delay: 1h
+              units: W
+              description: |
+                This attribute defines the system power cap value
+                (in Watts).
+              tags:
+                -
+                  tag: component
+                  value: power
+            -
+              uuid: 45ebd94ce8b847048248c1f1e1a01f9c
+              name: '{#PSU_DESCR} : Power Instantaenous Headroom'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.10892.5.4.600.60.1.20.1.{#SNMPVALUE}'
+              key: 'psu.usage[Power.Instant.Headroom.{#SNMPVALUE}]'
+              delay: 1h
+              units: W
+              description: |
+                This attribute defines the system instantaneous
+                headroom (in Watts).  This is the theoretical maximum power drawn by
+                the power supply minus instantaneous power draw.
+              tags:
+                -
+                  tag: component
+                  value: power
+            -
+              uuid: a3cde4a54b8e437885ec03d57711db86
+              name: '{#PSU_DESCR} : Power Peak Headroom'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.10892.5.4.600.60.1.21.1.{#SNMPVALUE}'
+              key: 'psu.usage[Power.Peak.Headroom.{#SNMPVALUE}]'
+              delay: 1h
+              units: W
+              description: |
+                This attribute defines the system peak headroom
+                (in Watts).  This is the theoretical maximum power drawn by the power
+                supply minus peak power draw.
+              tags:
+                -
+                  tag: component
+                  value: power
+            -
+              uuid: 8f26cc2220f64e9dbb20d11956b7d890
+              name: '{#PSU_DESCR} : Power Usage State Settings'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.10892.5.4.600.60.1.4.1.{#SNMPVALUE}'
+              key: 'psu.usage[Power.Usage.Setting.{#SNMPVALUE}]'
+              delay: 1h
+              description: 'This attribute defines the state settings of the power usage information.'
+              tags:
+                -
+                  tag: component
+                  value: power
+            -
+              uuid: aa910b3fbb4c40c984e6d852dff9b888
+              name: '{#PSU_DESCR} : Power Usage Status'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.10892.5.4.600.60.1.5.1.{#SNMPVALUE}'
+              key: 'psu.usage[Power.Usage.Status.{#SNMPVALUE}]'
+              delay: 1h
+              description: |
+                This attribute defines the status of the
+                power usage information.
+              tags:
+                -
+                  tag: component
+                  value: power
+        -
+          uuid: b522bbc53e494a4aa2895509988c8ae6
+          name: 'Temperature Ambient Discovery'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},1.3.6.1.4.1.674.10892.5.4.700.20.1.1,{#SENSOR_LOCALE},1.3.6.1.4.1.674.10892.5.4.700.20.1.8]'
+          key: temp.ambient.discovery
+          delay: 1h
+          filter:
+            conditions:
+              -
+                macro: '{#SENSOR_LOCALE}'
+                value: '.*Inlet Temp.*'
+                formulaid: A
+          description: 'Scanning table of Temperature Probe Table IDRAC-MIB-SMIv2::temperatureProbeTable'
+          item_prototypes:
+            -
+              uuid: 72bf924f292b49678aa02781f4080cf6
+              name: '{#SENSOR_LOCALE}: Temperature status'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.700.20.1.5.{#SNMPINDEX}'
+              key: 'sensor.temp.status[temperatureProbeStatus.Ambient.{#SNMPINDEX}]'
+              delay: 3m
+              history: 2w
+              trends: 0d
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                0700.0020.0001.0005 This attribute defines the probe status of the temperature probe.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::StatusProbeEnum'
+              tags:
+                -
+                  tag: component
+                  value: temperature
+            -
+              uuid: d54dc681acec4881ac1c58f44ebb79f6
+              name: '{#SENSOR_LOCALE}: Temperature'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.700.20.1.6.{#SNMPINDEX}'
+              key: 'sensor.temp.value[temperatureProbeReading.Ambient.{#SNMPINDEX}]'
+              delay: 3m
+              value_type: FLOAT
+              units: °C
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                0700.0020.0001.0006 This attribute defines the reading for a temperature probe of type other than temperatureProbeTypeIsDiscrete.  When the value for temperatureProbeType is other than temperatureProbeTypeIsDiscrete,the value returned for this attribute is the temperature that the probeis reading in tenths of degrees Centigrade. When the value for temperatureProbeType is temperatureProbeTypeIsDiscrete, a value is not returned for this attribute.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::StatusProbeEnum'
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '0.1'
+              tags:
+                -
+                  tag: component
+                  value: temperature
+              trigger_prototypes:
+                -
+                  uuid: f78d672786704355a32fbf4dd3f66a07
+                  expression: 'avg(/Dell iDRAC by SNMP -Commtel/sensor.temp.value[temperatureProbeReading.Ambient.{#SNMPINDEX}],5m)<{$TEMP_CRIT_LOW:"Ambient"}'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'min(/Dell iDRAC by SNMP -Commtel/sensor.temp.value[temperatureProbeReading.Ambient.{#SNMPINDEX}],5m)>{$TEMP_CRIT_LOW:"Ambient"}+3'
+                  name: '{#SENSOR_LOCALE}: Temperature is too low'
+                  event_name: '{#SENSOR_LOCALE}: Temperature is too low: <{$TEMP_CRIT_LOW:"Ambient"}'
+                  opdata: 'Current value: {ITEM.LASTVALUE1}'
+                  priority: AVERAGE
+                  tags:
+                    -
+                      tag: scope
+                      value: availability
+                    -
+                      tag: scope
+                      value: performance
+          trigger_prototypes:
+            -
+              uuid: b406258c8ec643a4bcfb9f09d0922dd3
+              expression: |
+                avg(/Dell iDRAC by SNMP -Commtel/sensor.temp.value[temperatureProbeReading.Ambient.{#SNMPINDEX}],5m)>{$TEMP_CRIT:"Ambient"}
+                or
+                last(/Dell iDRAC by SNMP -Commtel/sensor.temp.status[temperatureProbeStatus.Ambient.{#SNMPINDEX}])={$TEMP_CRIT_STATUS}
+                or
+                last(/Dell iDRAC by SNMP -Commtel/sensor.temp.status[temperatureProbeStatus.Ambient.{#SNMPINDEX}])={$TEMP_DISASTER_STATUS}
+              recovery_mode: RECOVERY_EXPRESSION
+              recovery_expression: 'max(/Dell iDRAC by SNMP -Commtel/sensor.temp.value[temperatureProbeReading.Ambient.{#SNMPINDEX}],5m)<{$TEMP_CRIT:"Ambient"}-3'
+              name: '{#SENSOR_LOCALE}: Temperature is above critical threshold'
+              event_name: '{#SENSOR_LOCALE}: Temperature is above critical threshold: >{$TEMP_CRIT:"Ambient"}'
+              opdata: 'Current value: {ITEM.LASTVALUE1}'
+              priority: HIGH
+              description: 'This trigger uses temperature sensor values as well as temperature sensor status if available'
+              tags:
+                -
+                  tag: scope
+                  value: availability
+                -
+                  tag: scope
+                  value: performance
+            -
+              uuid: d5b8fb8af7684cbb9247d9beba9372f0
+              expression: |
+                avg(/Dell iDRAC by SNMP -Commtel/sensor.temp.value[temperatureProbeReading.Ambient.{#SNMPINDEX}],5m)>{$TEMP_WARN:"Ambient"}
+                or
+                last(/Dell iDRAC by SNMP -Commtel/sensor.temp.status[temperatureProbeStatus.Ambient.{#SNMPINDEX}])={$TEMP_WARN_STATUS}
+              recovery_mode: RECOVERY_EXPRESSION
+              recovery_expression: 'max(/Dell iDRAC by SNMP -Commtel/sensor.temp.value[temperatureProbeReading.Ambient.{#SNMPINDEX}],5m)<{$TEMP_WARN:"Ambient"}-3'
+              name: '{#SENSOR_LOCALE}: Temperature is above warning threshold'
+              event_name: '{#SENSOR_LOCALE}: Temperature is above warning threshold: >{$TEMP_WARN:"Ambient"}'
+              opdata: 'Current value: {ITEM.LASTVALUE1}'
+              priority: WARNING
+              description: 'This trigger uses temperature sensor values as well as temperature sensor status if available'
+              dependencies:
+                -
+                  name: '{#SENSOR_LOCALE}: Temperature is above critical threshold'
+                  expression: |
+                    avg(/Dell iDRAC by SNMP -Commtel/sensor.temp.value[temperatureProbeReading.Ambient.{#SNMPINDEX}],5m)>{$TEMP_CRIT:"Ambient"}
+                    or
+                    last(/Dell iDRAC by SNMP -Commtel/sensor.temp.status[temperatureProbeStatus.Ambient.{#SNMPINDEX}])={$TEMP_CRIT_STATUS}
+                    or
+                    last(/Dell iDRAC by SNMP -Commtel/sensor.temp.status[temperatureProbeStatus.Ambient.{#SNMPINDEX}])={$TEMP_DISASTER_STATUS}
+                  recovery_expression: 'max(/Dell iDRAC by SNMP -Commtel/sensor.temp.value[temperatureProbeReading.Ambient.{#SNMPINDEX}],5m)<{$TEMP_CRIT:"Ambient"}-3'
+              tags:
+                -
+                  tag: scope
+                  value: availability
+                -
+                  tag: scope
+                  value: performance
+        -
+          uuid: 656312b857704e91a9da619aa71291ea
+          name: 'Temperature CPU Discovery'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},1.3.6.1.4.1.674.10892.5.4.700.20.1.1,{#SENSOR_LOCALE},1.3.6.1.4.1.674.10892.5.4.700.20.1.8]'
+          key: temp.cpu.discovery
+          delay: 1h
+          filter:
+            conditions:
+              -
+                macro: '{#SENSOR_LOCALE}'
+                value: '.*CPU.*'
+                formulaid: A
+          description: 'Scanning table of Temperature Probe Table IDRAC-MIB-SMIv2::temperatureProbeTable'
+          item_prototypes:
+            -
+              uuid: 93705499fcb048a6bad938db5b9a5902
+              name: '{#SENSOR_LOCALE}: Temperature status'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.700.20.1.5.{#SNMPINDEX}'
+              key: 'sensor.temp.status[temperatureProbeStatus.CPU.{#SNMPINDEX}]'
+              delay: 3m
+              history: 2w
+              trends: 0d
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                0700.0020.0001.0005 This attribute defines the probe status of the temperature probe.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::StatusProbeEnum'
+              tags:
+                -
+                  tag: component
+                  value: temperature
+            -
+              uuid: 88f8b6afd68b4999803547ba74a15ced
+              name: '{#SENSOR_LOCALE}: Temperature'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.700.20.1.6.{#SNMPINDEX}'
+              key: 'sensor.temp.value[temperatureProbeReading.CPU.{#SNMPINDEX}]'
+              delay: 3m
+              value_type: FLOAT
+              units: °C
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                0700.0020.0001.0006 This attribute defines the reading for a temperature probe of type other than temperatureProbeTypeIsDiscrete.  When the value for temperatureProbeType is other than temperatureProbeTypeIsDiscrete,the value returned for this attribute is the temperature that the probeis reading in tenths of degrees Centigrade. When the value for temperatureProbeType is temperatureProbeTypeIsDiscrete, a value is not returned for this attribute.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::StatusProbeEnum'
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '0.1'
+              tags:
+                -
+                  tag: component
+                  value: temperature
+              trigger_prototypes:
+                -
+                  uuid: 160d291276c24b5bb8a27adc30fcdf56
+                  expression: 'avg(/Dell iDRAC by SNMP -Commtel/sensor.temp.value[temperatureProbeReading.CPU.{#SNMPINDEX}],5m)<{$TEMP_CRIT_LOW:"CPU"}'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'min(/Dell iDRAC by SNMP -Commtel/sensor.temp.value[temperatureProbeReading.CPU.{#SNMPINDEX}],5m)>{$TEMP_CRIT_LOW:"CPU"}+3'
+                  name: '{#SENSOR_LOCALE}: Temperature is too low'
+                  event_name: '{#SENSOR_LOCALE}: Temperature is too low: <{$TEMP_CRIT_LOW:"CPU"}'
+                  opdata: 'Current value: {ITEM.LASTVALUE1}'
+                  priority: AVERAGE
+                  tags:
+                    -
+                      tag: scope
+                      value: availability
+                    -
+                      tag: scope
+                      value: performance
+          trigger_prototypes:
+            -
+              uuid: 9e62b7bfc67a486a955bc68fc73b934a
+              expression: |
+                avg(/Dell iDRAC by SNMP -Commtel/sensor.temp.value[temperatureProbeReading.CPU.{#SNMPINDEX}],5m)>{$TEMP_CRIT:"CPU"}
+                or
+                last(/Dell iDRAC by SNMP -Commtel/sensor.temp.status[temperatureProbeStatus.CPU.{#SNMPINDEX}])={$TEMP_CRIT_STATUS}
+                or
+                last(/Dell iDRAC by SNMP -Commtel/sensor.temp.status[temperatureProbeStatus.CPU.{#SNMPINDEX}])={$TEMP_DISASTER_STATUS}
+              recovery_mode: RECOVERY_EXPRESSION
+              recovery_expression: 'max(/Dell iDRAC by SNMP -Commtel/sensor.temp.value[temperatureProbeReading.CPU.{#SNMPINDEX}],5m)<{$TEMP_CRIT:"CPU"}-3'
+              name: '{#SENSOR_LOCALE}: Temperature is above critical threshold'
+              event_name: '{#SENSOR_LOCALE}: Temperature is above critical threshold: >{$TEMP_CRIT:"CPU"}'
+              opdata: 'Current value: {ITEM.LASTVALUE1}'
+              priority: HIGH
+              description: 'This trigger uses temperature sensor values as well as temperature sensor status if available'
+              tags:
+                -
+                  tag: scope
+                  value: availability
+                -
+                  tag: scope
+                  value: performance
+            -
+              uuid: 8d08559d18914900a5e97ea8528530fc
+              expression: |
+                avg(/Dell iDRAC by SNMP -Commtel/sensor.temp.value[temperatureProbeReading.CPU.{#SNMPINDEX}],5m)>{$TEMP_WARN:"CPU"}
+                or
+                last(/Dell iDRAC by SNMP -Commtel/sensor.temp.status[temperatureProbeStatus.CPU.{#SNMPINDEX}])={$TEMP_WARN_STATUS}
+              recovery_mode: RECOVERY_EXPRESSION
+              recovery_expression: 'max(/Dell iDRAC by SNMP -Commtel/sensor.temp.value[temperatureProbeReading.CPU.{#SNMPINDEX}],5m)<{$TEMP_WARN:"CPU"}-3'
+              name: '{#SENSOR_LOCALE}: Temperature is above warning threshold'
+              event_name: '{#SENSOR_LOCALE}: Temperature is above warning threshold: >{$TEMP_WARN:"CPU"}'
+              opdata: 'Current value: {ITEM.LASTVALUE1}'
+              priority: WARNING
+              description: 'This trigger uses temperature sensor values as well as temperature sensor status if available'
+              dependencies:
+                -
+                  name: '{#SENSOR_LOCALE}: Temperature is above critical threshold'
+                  expression: |
+                    avg(/Dell iDRAC by SNMP -Commtel/sensor.temp.value[temperatureProbeReading.CPU.{#SNMPINDEX}],5m)>{$TEMP_CRIT:"CPU"}
+                    or
+                    last(/Dell iDRAC by SNMP -Commtel/sensor.temp.status[temperatureProbeStatus.CPU.{#SNMPINDEX}])={$TEMP_CRIT_STATUS}
+                    or
+                    last(/Dell iDRAC by SNMP -Commtel/sensor.temp.status[temperatureProbeStatus.CPU.{#SNMPINDEX}])={$TEMP_DISASTER_STATUS}
+                  recovery_expression: 'max(/Dell iDRAC by SNMP -Commtel/sensor.temp.value[temperatureProbeReading.CPU.{#SNMPINDEX}],5m)<{$TEMP_CRIT:"CPU"}-3'
+              tags:
+                -
+                  tag: scope
+                  value: availability
+                -
+                  tag: scope
+                  value: performance
+        -
+          uuid: a39ba98efe094fe1b9755b09f83223ef
+          name: 'Virtual Disk Discovery'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},1.3.6.1.4.1.674.10892.5.5.1.20.140.1.1.1,{#DISK_NAME},1.3.6.1.4.1.674.10892.5.5.1.20.140.1.1.2]'
+          key: virtualdisk.discovery
+          delay: 1h
+          description: 'IDRAC-MIB-SMIv2::virtualDiskTable'
+          item_prototypes:
+            -
+              uuid: b3b5f05cfb694545957adfcaf6898788
+              name: 'Disk {#SNMPVALUE}({#DISK_NAME}): Available Protocols'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.140.1.1.32.{#SNMPINDEX}'
+              key: 'system.hw.virtualdisk.[AvailableProtocols.{#SNMPINDEX}]'
+              delay: 1h
+              history: 2w
+              trends: '0'
+              value_type: CHAR
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                List of protocols support by physical disks part of this virtual
+                disk. For e.g. SAS for Serial Attached SCSI or SATA for
+                Serial Advanced Technology Attachment.
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: component
+                  value: '{#DISK_NAME}'
+            -
+              uuid: 8fb81fbbbd4343e2a3117b57243c5df9
+              name: 'Disk {#SNMPVALUE}({#DISK_NAME}): Bad Blocks Detection'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.140.1.1.23.{#SNMPINDEX}'
+              key: 'system.hw.virtualdisk.[BadBlocksDetection.{#SNMPINDEX}]'
+              delay: 1h
+              history: 2w
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                ndicates whether the virtual disk has bad blocks.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2:: virtualDiskBadBlocksDetected'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: component
+                  value: '{#DISK_NAME}'
+            -
+              uuid: c939840d852f4922b6d301570448f00a
+              name: 'Disk {#SNMPVALUE}({#DISK_NAME}): Block Size In Bytes'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.140.1.1.38.{#SNMPINDEX}'
+              key: 'system.hw.virtualdisk.[BlockSizeInBytes.{#SNMPINDEX}]'
+              delay: 1h
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                The block size (in bytes) of the physical disk part of the virtual disk.
+                Possible values:
+                1:512.
+                2:4096
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: component
+                  value: '{#DISK_NAME}'
+            -
+              uuid: 47679f442c5a404183f323597477d3ca
+              name: 'Disk {#SNMPVALUE}({#DISK_NAME}): Component Status'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.140.1.1.20.{#SNMPINDEX}'
+              key: 'system.hw.virtualdisk.[ComponentStatus.{#SNMPINDEX}]'
+              delay: 1h
+              history: 2w
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                The status of the virtual disk itself without the
+                propagation of any contained component status.
+                Possible values:
+                1:Other.
+                2:Unknown.
+                3:OK.
+                4:Non-critical .
+                5:Critical.
+                6:Non-recoverable.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::physicalDiskComponentStatus'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: component
+                  value: '{#DISK_NAME}'
+            -
+              uuid: eef487cefe334518bce4b12d1cd26216
+              name: 'Disk {#SNMPVALUE}({#DISK_NAME}): Disk Cache Policy'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.140.1.1.26.{#SNMPINDEX}'
+              key: 'system.hw.virtualdisk.[DiskCachePolicy.{#SNMPINDEX}]'
+              delay: 1h
+              history: 2w
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                The cache policy of the physical disks that are
+                part of this virtual disk
+                Possible values:
+                1:Enabled.
+                2:Disabled.
+                3:Default.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::VirtualDiskCachePolicy'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: component
+                  value: '{#DISK_NAME}'
+            -
+              uuid: 60e20f56afe54a5199a36f2f259a0e7e
+              name: 'Disk {#SNMPVALUE}({#DISK_NAME}): Disk Integrity Fields'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.140.1.1.37.{#SNMPINDEX}'
+              key: 'system.hw.virtualdisk.[DiskIntegrityFields.{#SNMPINDEX}]'
+              delay: 1h
+              history: 2w
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                 Indicates whether the virtual disk supports the T10 PI (Protection
+                Information). These protection fields are known as DIF
+                (Data Integrity Fields).
+                Possible values:
+                1:Not one of the following.
+                2:Enabled.
+                3:Disabled.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2:: virtualDiskT10PIStatus'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: component
+                  value: '{#DISK_NAME}'
+            -
+              uuid: 940177402df34a839c828746dd36f0ea
+              name: 'Disk {#SNMPVALUE}({#DISK_NAME}): Media Type'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.140.1.1.33.{#SNMPINDEX}'
+              key: 'system.hw.virtualdisk.[MediaType.{#SNMPINDEX}]'
+              delay: 1h
+              history: 2w
+              trends: '0'
+              value_type: CHAR
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                List of media types of the physical disks part of this virtual
+                disk. For e.g. HDD for Hard Disk Drive or SSD for Solid State Device.
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: component
+                  value: '{#DISK_NAME}'
+            -
+              uuid: b7ae64efba34428998b2cf38c2a0448d
+              name: 'Disk {#SNMPVALUE}({#DISK_NAME}): Progress'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.140.1.1.31.{#SNMPINDEX}'
+              key: 'system.hw.virtualdisk.[Progress.{#SNMPINDEX}]'
+              delay: 1h
+              history: 2w
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                The progress percentage of the operation that is being
+                performed on the virtual disk. This is applicable
+                only if there is a progressive operations ongoing
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: component
+                  value: '{#DISK_NAME}'
+            -
+              uuid: 80d998b216d44d2fa814d0dcd2bc8d91
+              name: 'Disk {#SNMPVALUE}({#DISK_NAME}): Read policy'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.140.1.1.11.{#SNMPINDEX}'
+              key: 'system.hw.virtualdisk.[ReadPolicy.{#SNMPINDEX}]'
+              delay: 1h
+              history: 2w
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                The read policy used by the controller for read operations on this virtual disk.
+                Possible values:
+                1: No Read Ahead.
+                2: Read Ahead.
+                3: Adaptive Read Ahead.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2:: virtualDiskReadPolicy'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: component
+                  value: '{#DISK_NAME}'
+            -
+              uuid: 7921c6a950294906b48672db87d638ce
+              name: 'Disk {#SNMPVALUE}({#DISK_NAME}): Remaining Redundancy'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.140.1.1.34.{#SNMPINDEX}'
+              key: 'system.hw.virtualdisk.[RemainingRedundancy.{#SNMPINDEX}]'
+              delay: 5m
+              history: 2w
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                The number of physical disks which can be lost before the
+                virtual disk loses its redundancy.
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: component
+                  value: '{#DISK_NAME}'
+            -
+              uuid: dd877cfafa914ceda7f6ee628990075e
+              name: 'Disk {#SNMPVALUE}({#DISK_NAME}): Secured'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.140.1.1.24.{#SNMPINDEX}'
+              key: 'system.hw.virtualdisk.[Secured.{#SNMPINDEX}]'
+              delay: 1h
+              history: 2w
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                 Indicates whether the virtual disk is secured or not.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2:: virtualDiskSecured'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: component
+                  value: '{#DISK_NAME}'
+            -
+              uuid: 4106e480cc5f45e2a4df47044a8fd4ad
+              name: 'Disk {#SNMPVALUE}({#DISK_NAME}): Strip Size'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.140.1.1.14.{#SNMPINDEX}'
+              key: 'system.hw.virtualdisk.[StripSize.{#SNMPINDEX}]'
+              delay: 1h
+              history: 2w
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                The stripe size of this virtual disk.
+                Possible values:
+                1:Not one of the following
+                2:Default.
+                3:512 bytes
+                4:1 kB,
+                5:2 kB,
+                6:4 kB,
+                7:8 kB,
+                8:16 kB,
+                9:32 kB,
+                10:64 kB,
+                11:128 kB,
+                12:256 kB,
+                13:512 kB,
+                14:1 MB,
+                15:2 MB,
+                16:4 MB,
+                17:8 MB,
+                18:16 MB
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::virtualDiskStripSize'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: component
+                  value: '{#DISK_NAME}'
+            -
+              uuid: 65e26d18b3f341f59ba567656bf1f21d
+              name: 'Disk {#SNMPVALUE}({#DISK_NAME}): Layout type'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.140.1.1.13.{#SNMPINDEX}'
+              key: 'system.hw.virtualdisk[Layout.{#SNMPINDEX}]'
+              delay: 1h
+              history: 2w
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                The virtual disk's RAID type.
+                Possible values:
+                1: Not one of the following
+                2: RAID-0
+                3: RAID-1
+                4: RAID-5
+                5: RAID-6
+                6: RAID-10
+                7: RAID-50
+                8: RAID-60
+                9: Concatenated RAID 1
+                10: Concatenated RAID 5
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::virtualDiskLayout'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: component
+                  value: '{#DISK_NAME}'
+            -
+              uuid: 17875a68335946d3841976f374de542a
+              name: 'Disk {#SNMPVALUE}({#DISK_NAME}): Current state'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.140.1.1.30.{#SNMPINDEX}'
+              key: 'system.hw.virtualdisk[OperationalState.{#SNMPINDEX}]'
+              delay: 3m
+              history: 2w
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                The state of the virtual disk when there are progressive operations ongoing.
+                Possible values:
+                1: There is no active operation running.
+                2: The virtual disk configuration has changed. The physical disks included in the virtual disk are being modified to support the new configuration.
+                3: A Consistency Check (CC) is being performed on the virtual disk.
+                4: The virtual disk is being initialized.
+                5: BackGround Initialization (BGI) is being performed on the virtual disk.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::virtualDiskOperationalState'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: component
+                  value: '{#DISK_NAME}'
+            -
+              uuid: 4427e9d00182484eba223bafdcd057cd
+              name: 'Disk {#SNMPVALUE}({#DISK_NAME}): Disk size'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.140.1.1.6.{#SNMPINDEX}'
+              key: 'system.hw.virtualdisk[SizeInMB.{#SNMPINDEX}]'
+              delay: 1h
+              history: 2w
+              trends: '0'
+              units: B
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                The size of the virtual disk in megabytes.
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '1048576'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: component
+                  value: '{#DISK_NAME}'
+            -
+              uuid: d6173bb0b05e416abd2c8255be91f4f2
+              name: 'Disk {#SNMPVALUE}({#DISK_NAME}): Status'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.140.1.1.4.{#SNMPINDEX}'
+              key: 'system.hw.virtualdisk[State.{#SNMPINDEX}]'
+              delay: 3m
+              history: 2w
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                The current state of this virtual disk (which includes any member physical disks.)
+                Possible states:
+                1: The current state could not be determined.
+                2: The virtual disk is operating normally or optimally.
+                3: The virtual disk has encountered a failure. The data on disk is lost or is about to be lost.
+                4: The virtual disk encountered a failure with one or all of the constituent redundant physical disks.
+                The data on the virtual disk might no longer be fault tolerant.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::virtualDiskState'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: component
+                  value: '{#DISK_NAME}'
+              trigger_prototypes:
+                -
+                  uuid: 7f6d548f5df840faa5daea19e2b783a8
+                  expression: 'count(/Dell iDRAC by SNMP -Commtel/system.hw.virtualdisk[State.{#SNMPINDEX}],#1,"eq","{$VDISK_CRIT_STATUS:\"failed\"}")=1'
+                  name: 'Disk {#SNMPVALUE}({#DISK_NAME}): Virtual disk failed'
+                  opdata: 'Current state: {ITEM.LASTVALUE1}'
+                  priority: HIGH
+                  description: 'Please check virtual disk for warnings or errors'
+                  tags:
+                    -
+                      tag: scope
+                      value: availability
+                    -
+                      tag: scope
+                      value: performance
+                -
+                  uuid: 112c4e327c75425c8be3381742717129
+                  expression: 'count(/Dell iDRAC by SNMP -Commtel/system.hw.virtualdisk[State.{#SNMPINDEX}],#1,"eq","{$VDISK_WARN_STATUS:\"degraded\"}")=1'
+                  name: 'Disk {#SNMPVALUE}({#DISK_NAME}): Virtual disk is in warning state'
+                  opdata: 'Current state: {ITEM.LASTVALUE1}'
+                  priority: AVERAGE
+                  description: 'Please check virtual disk for warnings or errors'
+                  dependencies:
+                    -
+                      name: 'Disk {#SNMPVALUE}({#DISK_NAME}): Virtual disk failed'
+                      expression: 'count(/Dell iDRAC by SNMP -Commtel/system.hw.virtualdisk[State.{#SNMPINDEX}],#1,"eq","{$VDISK_CRIT_STATUS:\"failed\"}")=1'
+                  tags:
+                    -
+                      tag: scope
+                      value: availability
+                    -
+                      tag: scope
+                      value: performance
+            -
+              uuid: f93e408c2fa64fe982eb3cdb152316d8
+              name: 'Disk {#SNMPVALUE}({#DISK_NAME}): Write policy'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.5.1.20.140.1.1.10.{#SNMPINDEX}'
+              key: 'system.hw.virtualdisk[WritePolicy.{#SNMPINDEX}]'
+              delay: 1h
+              history: 2w
+              description: |
+                MIB: IDRAC-MIB-SMIv2
+                The write policy used by the controller for write operations on this virtual disk.
+                Possible values:
+                1: Write Through.
+                2: Write Back.
+                3: Force Write Back.
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::virtualDiskWritePolicy'
+              tags:
+                -
+                  tag: component
+                  value: disk
+                -
+                  tag: component
+                  value: storage
+                -
+                  tag: component
+                  value: '{#DISK_NAME}'
+        -
+          uuid: c3274e64caac4af3919adaeb5da27601
+          name: 'Voltage Discovery'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},1.3.6.1.4.1.674.10892.5.4.600.20.1.2.1,{#PROBE_DESCR},1.3.6.1.4.1.674.10892.5.4.600.20.1.8.1]'
+          key: volt.discovery
+          delay: 1h
+          description: 'IDRAC-MIB-SMIv2::powerSupplyTable'
+          item_prototypes:
+            -
+              uuid: 0f7035e209ed41c18087aa261982e068
+              name: '{#PROBE_DESCR} : Voltage Reading'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.600.20.1.6.1.{#SNMPVALUE}'
+              key: 'volt.reading[{#SNMPVALUE}]'
+              units: V
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '0.001'
+              tags:
+                -
+                  tag: component
+                  value: power
+                -
+                  tag: component
+                  value: voltage
+            -
+              uuid: 281831ce246742ccbeeb9e31cdda9bb2
+              name: '{#PROBE_DESCR} : Voltage Probe Status'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.600.20.1.5.1.{#SNMPVALUE}'
+              key: 'volt.status[probe.{#SNMPVALUE}]'
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::amperageProbeStatus'
+              tags:
+                -
+                  tag: component
+                  value: power
+                -
+                  tag: component
+                  value: voltage
+            -
+              uuid: 68f8490cb89e453badf27ac2090c3b11
+              name: '{#PROBE_DESCR} : Voltage Status'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.674.10892.5.4.600.20.1.16.1.{#SNMPVALUE}'
+              key: 'volt.status[{#SNMPVALUE}]'
+              valuemap:
+                name: 'IDRAC-MIB-SMIv2::VoltageProbeDiscreteReading'
+              tags:
+                -
+                  tag: component
+                  value: power
+                -
+                  tag: component
+                  value: voltage
+      tags:
+        -
+          tag: class
+          value: hardware
+        -
+          tag: target
+          value: dell
+        -
+          tag: target
+          value: idrac
+      macros:
+        -
+          macro: '{$DISK_ARRAY_CACHE_BATTERY_CRIT_STATUS}'
+          value: '3'
+        -
+          macro: '{$DISK_ARRAY_CACHE_BATTERY_OK_STATUS}'
+          value: '2'
+        -
+          macro: '{$DISK_ARRAY_CACHE_BATTERY_WARN_STATUS}'
+          value: '4'
+        -
+          macro: '{$DISK_ARRAY_CRIT_STATUS:"critical"}'
+          value: '5'
+        -
+          macro: '{$DISK_ARRAY_FAIL_STATUS:"nonRecoverable"}'
+          value: '6'
+        -
+          macro: '{$DISK_ARRAY_WARN_STATUS:"nonCritical"}'
+          value: '4'
+        -
+          macro: '{$DISK_FAIL_STATUS:"critical"}'
+          value: '5'
+        -
+          macro: '{$DISK_FAIL_STATUS:"nonRecoverable"}'
+          value: '6'
+        -
+          macro: '{$DISK_SMART_FAIL_STATUS}'
+          value: '1'
+        -
+          macro: '{$DISK_WARN_STATUS:"nonCritical"}'
+          value: '4'
+        -
+          macro: '{$FAN_CRIT_STATUS:"criticalLower"}'
+          value: '8'
+        -
+          macro: '{$FAN_CRIT_STATUS:"criticalUpper"}'
+          value: '5'
+        -
+          macro: '{$FAN_CRIT_STATUS:"failed"}'
+          value: '10'
+        -
+          macro: '{$FAN_CRIT_STATUS:"nonRecoverableLower"}'
+          value: '9'
+        -
+          macro: '{$FAN_CRIT_STATUS:"nonRecoverableUpper"}'
+          value: '6'
+        -
+          macro: '{$FAN_WARN_STATUS:"nonCriticalLower"}'
+          value: '7'
+        -
+          macro: '{$FAN_WARN_STATUS:"nonCriticalUpper"}'
+          value: '4'
+        -
+          macro: '{$HEALTH_CRIT_STATUS}'
+          value: '5'
+        -
+          macro: '{$HEALTH_DISASTER_STATUS}'
+          value: '6'
+        -
+          macro: '{$HEALTH_WARN_STATUS}'
+          value: '4'
+        -
+          macro: '{$ICMP_LOSS_WARN}'
+          value: '20'
+        -
+          macro: '{$ICMP_RESPONSE_TIME_WARN}'
+          value: '0.15'
+        -
+          macro: '{$PSU_CRIT_STATUS:"critical"}'
+          value: '5'
+        -
+          macro: '{$PSU_CRIT_STATUS:"nonRecoverable"}'
+          value: '6'
+        -
+          macro: '{$PSU_WARN_STATUS:"nonCritical"}'
+          value: '4'
+        -
+          macro: '{$SNMP.TIMEOUT}'
+          value: 5m
+        -
+          macro: '{$TEMP_CRIT}'
+          value: '60'
+        -
+          macro: '{$TEMP_CRIT:"Ambient"}'
+          value: '35'
+        -
+          macro: '{$TEMP_CRIT:"CPU"}'
+          value: '75'
+        -
+          macro: '{$TEMP_CRIT_LOW}'
+          value: '5'
+        -
+          macro: '{$TEMP_CRIT_STATUS}'
+          value: '5'
+        -
+          macro: '{$TEMP_DISASTER_STATUS}'
+          value: '6'
+        -
+          macro: '{$TEMP_WARN}'
+          value: '50'
+        -
+          macro: '{$TEMP_WARN:"Ambient"}'
+          value: '30'
+        -
+          macro: '{$TEMP_WARN:"CPU"}'
+          value: '70'
+        -
+          macro: '{$TEMP_WARN_STATUS}'
+          value: '4'
+        -
+          macro: '{$VDISK_CRIT_STATUS:"failed"}'
+          value: '3'
+        -
+          macro: '{$VDISK_WARN_STATUS:"degraded"}'
+          value: '4'
+      valuemaps:
+        -
+          uuid: b00433905b174b7c83159a3ce1be8b42
+          name: 'IDARC-MIB-SMIv2::systemBatteryStateSettings'
+          mappings:
+            -
+              value: '1'
+              newvalue: Unknown
+            -
+              value: '2'
+              newvalue: Enabled
+            -
+              value: '4'
+              newvalue: 'Not ready'
+            -
+              value: '6'
+              newvalue: 'Enabled and Not Ready'
+        -
+          uuid: e5303be172624ec0b8764ff2236bf9a5
+          name: 'IDARC-MIB-SMIv2:: systemBatteryStatus'
+          mappings:
+            -
+              value: '1'
+              newvalue: Other
+            -
+              value: '2'
+              newvalue: Unknown
+            -
+              value: '3'
+              newvalue: OK
+            -
+              value: '4'
+              newvalue: Non-Critical
+            -
+              value: '5'
+              newvalue: Critical
+            -
+              value: '6'
+              newvalue: Non-Recoverable
+        -
+          uuid: 1a22de5738574e819ad1eb3714319922
+          name: 'IDARC-MIB-SMIv2:: virtualDiskComponentStatus'
+          mappings:
+            -
+              value: '1'
+              newvalue: Other
+            -
+              value: '2'
+              newvalue: Unknown
+            -
+              value: '3'
+              newvalue: OK
+            -
+              value: '4'
+              newvalue: Non-Critical
+            -
+              value: '5'
+              newvalue: Critical
+            -
+              value: '6'
+              newvalue: Non-Recoverable
+        -
+          uuid: 0ea725f35b074aecaefb076df7454a1f
+          name: 'IDRAC-MIB-SMIv2::amperageProbeStatus'
+          mappings:
+            -
+              value: '1'
+              newvalue: Other
+            -
+              value: '2'
+              newvalue: Unknown
+            -
+              value: '3'
+              newvalue: OK
+            -
+              value: '4'
+              newvalue: 'Non-Critical Upper'
+            -
+              value: '5'
+              newvalue: 'Critical Upeer'
+            -
+              value: '6'
+              newvalue: 'Non-Recoverable Upper'
+            -
+              value: '7'
+              newvalue: 'Non-Critical Lower'
+            -
+              value: '8'
+              newvalue: 'Critical Lower'
+            -
+              value: '9'
+              newvalue: 'Non-Recoverable Lower'
+            -
+              value: '10'
+              newvalue: Failed
+        -
+          uuid: 116a264a2e974c5689dcd6b742b9c228
+          name: 'IDRAC-MIB-SMIv2::BatteryComponentStatus'
+          mappings:
+            -
+              value: '1'
+              newvalue: Other
+            -
+              value: '2'
+              newvalue: Unknown
+            -
+              value: '3'
+              newvalue: Ok
+            -
+              value: '4'
+              newvalue: Non-Critical
+            -
+              value: '5'
+              newvalue: Critical
+            -
+              value: '6'
+              newvalue: Non-Recoverable
+        -
+          uuid: d98e2f06f897407d956eb4ac0b7986a8
+          name: 'IDRAC-MIB-SMIv2::batteryState'
+          mappings:
+            -
+              value: '1'
+              newvalue: Unknown
+            -
+              value: '2'
+              newvalue: Ready
+            -
+              value: '3'
+              newvalue: Failed
+            -
+              value: '4'
+              newvalue: Degraded
+            -
+              value: '5'
+              newvalue: Missing
+            -
+              value: '6'
+              newvalue: Charging
+            -
+              value: '7'
+              newvalue: 'Below threshold'
+        -
+          uuid: 83d9a22652cf46a3a42155521c88e1ec
+          name: 'IDRAC-MIB-SMIv2::BooleanType'
+          mappings:
+            -
+              value: '0'
+              newvalue: ok
+            -
+              value: '1'
+              newvalue: failed
+        -
+          uuid: f75d28f2d703475fbf392649394e1ba1
+          name: 'IDRAC-MIB-SMIv2:: memoryDeviceStateSettings'
+          mappings:
+            -
+              value: '1'
+              newvalue: Unknown
+            -
+              value: '2'
+              newvalue: Enabled
+            -
+              value: '4'
+              newvalue: 'Not Ready'
+            -
+              value: '6'
+              newvalue: 'Enabled and Not Ready'
+        -
+          uuid: cc2327fce11344ffb151c9eafacc1e71
+          name: 'IDRAC-MIB-SMIv2::ObjectStatusEnum'
+          mappings:
+            -
+              value: '1'
+              newvalue: other
+            -
+              value: '2'
+              newvalue: unknown
+            -
+              value: '3'
+              newvalue: ok
+            -
+              value: '4'
+              newvalue: nonCritical
+            -
+              value: '5'
+              newvalue: critical
+            -
+              value: '6'
+              newvalue: nonRecoverable
+        -
+          uuid: 6ba0c817fe88468bbec64d4577b1bc73
+          name: 'IDRAC-MIB-SMIv2:: physicalDiskBusType'
+          mappings:
+            -
+              value: '1'
+              newvalue: Unknown
+            -
+              value: '2'
+              newvalue: SCSI
+            -
+              value: '3'
+              newvalue: SAS
+            -
+              value: '4'
+              newvalue: SATA
+            -
+              value: '5'
+              newvalue: Fiber
+            -
+              value: '6'
+              newvalue: PCIE
+            -
+              value: '7'
+              newvalue: NVME
+        -
+          uuid: f62899afee774b7f8a050db42a8d3c03
+          name: 'IDRAC-MIB-SMIv2::physicalDiskComponentStatus'
+          mappings:
+            -
+              value: '1'
+              newvalue: other
+            -
+              value: '2'
+              newvalue: unknown
+            -
+              value: '3'
+              newvalue: ok
+            -
+              value: '4'
+              newvalue: nonCritical
+            -
+              value: '5'
+              newvalue: critical
+            -
+              value: '6'
+              newvalue: nonRecoverable
+        -
+          uuid: c2bffe66c2ed4bb3a1154ac59d081cce
+          name: 'IDRAC-MIB-SMIv2:: physicalDiskFormFactor'
+          mappings:
+            -
+              value: '1'
+              newvalue: 'Form Factor could not be determined'
+            -
+              value: '2'
+              newvalue: '1.8 inch'
+            -
+              value: '3'
+              newvalue: '2.5 inch'
+            -
+              value: '4'
+              newvalue: '3.5 inch'
+            -
+              value: '5'
+              newvalue: EDSFFE1.L.
+        -
+          uuid: b4f27b1058e24f11840acf88c24312c1
+          name: 'IDRAC-MIB-SMIv2::physicalDiskMediaType'
+          mappings:
+            -
+              value: '1'
+              newvalue: Unknown
+            -
+              value: '2'
+              newvalue: HDD
+            -
+              value: '3'
+              newvalue: SSD
+        -
+          uuid: 4b061360899d40b3a83f9fdccb202316
+          name: 'IDRAC-MIB-SMIv2::physicalDiskNegotiatedSpeed'
+          mappings:
+            -
+              value: '1'
+              newvalue: Unknown
+            -
+              value: '2'
+              newvalue: 1.5Gbps
+            -
+              value: '3'
+              newvalue: 3Gbps
+            -
+              value: '4'
+              newvalue: 6Gbps
+            -
+              value: '5'
+              newvalue: 12Gbps
+            -
+              value: '6'
+              newvalue: 5GTps
+            -
+              value: '7'
+              newvalue: 8GTps
+            -
+              value: '8'
+              newvalue: 16GTps
+            -
+              value: '9'
+              newvalue: 32GTps
+        -
+          uuid: d414bccad70c4527acfc92fb00afb4b5
+          name: 'IDRAC-MIB-SMIv2:: physicalDiskOperationalState'
+          mappings:
+            -
+              value: '1'
+              newvalue: 'Not Applicable'
+            -
+              value: '2'
+              newvalue: Rebuild
+            -
+              value: '3'
+              newvalue: Clear
+            -
+              value: '4'
+              newvalue: 'Copy back'
+        -
+          uuid: c7269fecfc5a42deaa6f215a915f4eb6
+          name: 'IDRAC-MIB-SMIv2:: physicalDiskPCIeNegotiatedLinkWidth'
+          mappings:
+            -
+              value: '1'
+              newvalue: Other
+            -
+              value: '2'
+              newvalue: 'Not Applicable'
+            -
+              value: '3'
+              newvalue: /1
+            -
+              value: '4'
+              newvalue: /1
+            -
+              value: '5'
+              newvalue: /4
+            -
+              value: '6'
+              newvalue: /8
+            -
+              value: '7'
+              newvalue: /16
+            -
+              value: '8'
+              newvalue: /32
+        -
+          uuid: b6287068b39141ff8e05f7ece6d57d6c
+          name: 'IDRAC-MIB-SMIv2:: physicalDiskPowerState'
+          mappings:
+            -
+              value: '1'
+              newvalue: Other
+            -
+              value: '2'
+              newvalue: SpunUp
+            -
+              value: '3'
+              newvalue: SpunDown
+            -
+              value: '4'
+              newvalue: Transition
+            -
+              value: '5'
+              newvalue: 'ON'
+        -
+          uuid: 7a323a35e69d4f3db727847735de4268
+          name: 'IDRAC-MIB-SMIv2:: physicalDiskSecurityStatus'
+          mappings:
+            -
+              value: '1'
+              newvalue: Supported
+            -
+              value: '2'
+              newvalue: 'Not Supported'
+            -
+              value: '3'
+              newvalue: Secured
+            -
+              value: '4'
+              newvalue: Locked
+            -
+              value: '5'
+              newvalue: Foreign
+        -
+          uuid: cd0def9b55de434787ae2f9d6f57a57a
+          name: 'IDRAC-MIB-SMIv2::physicalDiskState'
+          mappings:
+            -
+              value: '1'
+              newvalue: Unknown
+            -
+              value: '2'
+              newvalue: Ready
+            -
+              value: '3'
+              newvalue: Online
+            -
+              value: '4'
+              newvalue: Foreign
+            -
+              value: '5'
+              newvalue: Offline
+            -
+              value: '6'
+              newvalue: Blocked
+            -
+              value: '7'
+              newvalue: Failed
+            -
+              value: '8'
+              newvalue: Non-RAID
+            -
+              value: '9'
+              newvalue: Removed
+            -
+              value: '10'
+              newvalue: Readonly
+        -
+          uuid: 853a269ffff644c9911805c50b043f5e
+          name: 'IDRAC-MIB-SMIv2:: physicalDiskT10PICapability'
+          mappings:
+            -
+              value: '1'
+              newvalue: Other
+            -
+              value: '2'
+              newvalue: Capable
+            -
+              value: '3'
+              newvalue: 'Not Capable'
+        -
+          uuid: ebb52e0bebac43eb908b1e305cce9e0a
+          name: 'IDRAC-MIB-SMIv2:: powerCap Capabilities'
+          mappings:
+            -
+              value: '1'
+              newvalue: Enabled
+            -
+              value: '2'
+              newvalue: Disabled
+        -
+          uuid: ef811ea0b37d490a85b0e9e296d50328
+          name: 'IDRAC-MIB-SMIv2:: powerUsageStateSettings'
+          mappings:
+            -
+              value: '1'
+              newvalue: Unknown
+            -
+              value: '2'
+              newvalue: Enabled
+            -
+              value: '4'
+              newvalue: 'Not Ready'
+            -
+              value: '6'
+              newvalue: 'Enabled  and Not Ready'
+        -
+          uuid: 21b4a6ccc1fa4e90b071398f7fb2bca7
+          name: 'IDRAC-MIB-SMIv2:: powerUsageStatus'
+          mappings:
+            -
+              value: '1'
+              newvalue: Other
+            -
+              value: '2'
+              newvalue: Unknown
+            -
+              value: '3'
+              newvalue: OK
+            -
+              value: '4'
+              newvalue: Non-Critical
+            -
+              value: '5'
+              newvalue: Critical
+            -
+              value: '6'
+              newvalue: Non-Recoverable
+        -
+          uuid: 5542b27288f44108ac22387a6a88db97
+          name: 'IDRAC-MIB-SMIv2::ProcesorDeviceType'
+          mappings:
+            -
+              value: '1'
+              newvalue: 'Device Type is Other'
+            -
+              value: '2'
+              newvalue: 'Device Type is Unknown'
+            -
+              value: '3'
+              newvalue: 'Device Type is CPU'
+            -
+              value: '4'
+              newvalue: 'Device Type is Math Processor'
+            -
+              value: '5'
+              newvalue: 'Device Type is DSP'
+            -
+              value: '6'
+              newvalue: 'Device Type is a Video Processor'
+        -
+          uuid: 4e72894bacf5409b8cd28b5fafba80ae
+          name: 'IDRAC-MIB-SMIv2::RemainingRatedWriteEndurance'
+          mappings:
+            -
+              value: '255'
+              newvalue: 'NA(for HDD)'
+        -
+          uuid: 469378b8ff5046b7af730c20c793a8e1
+          name: 'IDRAC-MIB-SMIv2::StateSettingsFlags'
+          mappings:
+            -
+              value: '1'
+              newvalue: Unknown
+            -
+              value: '2'
+              newvalue: Enabled
+            -
+              value: '4'
+              newvalue: 'Not Ready'
+            -
+              value: '6'
+              newvalue: 'Enabled and Not Ready'
+        -
+          uuid: fe04d6f61aed4ed6b46ca536eddad5f3
+          name: 'IDRAC-MIB-SMIv2::StatusProbeEnum'
+          mappings:
+            -
+              value: '1'
+              newvalue: other
+            -
+              value: '2'
+              newvalue: unknown
+            -
+              value: '3'
+              newvalue: ok
+            -
+              value: '4'
+              newvalue: nonCriticalUpper
+            -
+              value: '5'
+              newvalue: criticalUpper
+            -
+              value: '6'
+              newvalue: nonRecoverableUpper
+            -
+              value: '7'
+              newvalue: nonCriticalLower
+            -
+              value: '8'
+              newvalue: criticalLower
+            -
+              value: '9'
+              newvalue: nonRecoverableLower
+            -
+              value: '10'
+              newvalue: failed
+        -
+          uuid: b2fdfffe18be4498b67b931a5ebc445e
+          name: 'IDRAC-MIB-SMIv2::systemBatteryReading'
+          mappings:
+            -
+              value: '1'
+              newvalue: 'Predictive Failure'
+            -
+              value: '2'
+              newvalue: Failed
+            -
+              value: '4'
+              newvalue: 'Presence Detected'
+        -
+          uuid: 6cf99a91ca1749978a3110fec7296842
+          name: 'IDRAC-MIB-SMIv2:: virtualDiskBadBlocksDetected'
+          mappings:
+            -
+              value: '0'
+              newvalue: 'No Bad Blocks'
+            -
+              value: '1'
+              newvalue: 'Bad Blocks Detected'
+        -
+          uuid: 60755c184dfe4c409ccbb260fc431b9e
+          name: 'IDRAC-MIB-SMIv2::VirtualDiskCachePolicy'
+          mappings:
+            -
+              value: '1'
+              newvalue: Enabled
+            -
+              value: '2'
+              newvalue: Disabled
+            -
+              value: '3'
+              newvalue: Default
+        -
+          uuid: 02ed16a9028c4156bf07938d04af6d8e
+          name: 'IDRAC-MIB-SMIv2:: virtualDiskIsCacheCade'
+          mappings:
+            -
+              value: '0'
+              newvalue: 'Disk is not used as cache'
+            -
+              value: '1'
+              newvalue: 'Disk is used as cache'
+        -
+          uuid: 6cceb644c8b64913b4ed1a235cf7750e
+          name: 'IDRAC-MIB-SMIv2::virtualDiskLayout'
+          mappings:
+            -
+              value: '1'
+              newvalue: Other
+            -
+              value: '2'
+              newvalue: RAID-0
+            -
+              value: '3'
+              newvalue: RAID-1
+            -
+              value: '4'
+              newvalue: RAID-5
+            -
+              value: '5'
+              newvalue: RAID-6
+            -
+              value: '6'
+              newvalue: RAID-10
+            -
+              value: '7'
+              newvalue: RAID-50
+            -
+              value: '8'
+              newvalue: RAID-60
+            -
+              value: '9'
+              newvalue: 'Concatenated RAID 1'
+            -
+              value: '10'
+              newvalue: 'Concatenated RAID 5'
+        -
+          uuid: ae6a738b8a084f08a276005261d4dc97
+          name: 'IDRAC-MIB-SMIv2::virtualDiskOperationalState'
+          mappings:
+            -
+              value: '1'
+              newvalue: 'Not applicable'
+            -
+              value: '2'
+              newvalue: Reconstructing
+            -
+              value: '3'
+              newvalue: Resynching
+            -
+              value: '4'
+              newvalue: Initializing
+            -
+              value: '5'
+              newvalue: 'Background init'
+        -
+          uuid: ef3b8c5b2bde4d36bbf65b4de134aa93
+          name: 'IDRAC-MIB-SMIv2:: virtualDiskReadPolicy'
+          mappings:
+            -
+              value: '1'
+              newvalue: 'No Read Ahead'
+            -
+              value: '2'
+              newvalue: 'Read Ahead'
+            -
+              value: '3'
+              newvalue: 'Adaptive Read Ahead'
+        -
+          uuid: 02e1e69d110d45eaac90a8863d33188a
+          name: 'IDRAC-MIB-SMIv2:: virtualDiskSecured'
+          mappings:
+            -
+              value: '0'
+              newvalue: Unsecured
+            -
+              value: '1'
+              newvalue: Secured
+        -
+          uuid: ea26fa93053448ffb08798dd6d3cfcad
+          name: 'IDRAC-MIB-SMIv2::virtualDiskState'
+          mappings:
+            -
+              value: '1'
+              newvalue: Unknown
+            -
+              value: '2'
+              newvalue: Online
+            -
+              value: '3'
+              newvalue: Failed
+            -
+              value: '4'
+              newvalue: Degraded
+        -
+          uuid: d7eaee211fe144cabadbc8ccf0c52f08
+          name: 'IDRAC-MIB-SMIv2::virtualDiskStripSize'
+          mappings:
+            -
+              value: '1'
+              newvalue: Other
+            -
+              value: '2'
+              newvalue: Default
+            -
+              value: '3'
+              newvalue: 512B
+            -
+              value: '4'
+              newvalue: 1KB
+            -
+              value: '5'
+              newvalue: 2KB
+            -
+              value: '6'
+              newvalue: 4KB
+            -
+              value: '7'
+              newvalue: 8KB
+            -
+              value: '8'
+              newvalue: 16KB
+            -
+              value: '9'
+              newvalue: 32KB
+            -
+              value: '10'
+              newvalue: 64KB
+            -
+              value: '11'
+              newvalue: 128KB
+            -
+              value: '12'
+              newvalue: 256KB
+            -
+              value: '13'
+              newvalue: 512KB
+            -
+              value: '14'
+              newvalue: 1MB
+            -
+              value: '15'
+              newvalue: 2MB
+            -
+              value: '16'
+              newvalue: 4MB
+            -
+              value: '17'
+              newvalue: 8MB
+            -
+              value: '18'
+              newvalue: 16MB
+        -
+          uuid: c16ca3e4eeeb4862a740edda1c698ce7
+          name: 'IDRAC-MIB-SMIv2:: virtualDiskT10PIStatus'
+          mappings:
+            -
+              value: '1'
+              newvalue: Other
+            -
+              value: '2'
+              newvalue: Enabled
+            -
+              value: '3'
+              newvalue: Disabled
+        -
+          uuid: 358ddbd206564dc187f29ca839fbe322
+          name: 'IDRAC-MIB-SMIv2::virtualDiskWritePolicy'
+          mappings:
+            -
+              value: '1'
+              newvalue: 'Write Through'
+            -
+              value: '2'
+              newvalue: 'Write Back'
+            -
+              value: '3'
+              newvalue: 'Force Write Back'
+        -
+          uuid: 6f728851397e4567a535e49f4971d415
+          name: 'IDRAC-MIB-SMIv2::VoltageProbeDiscreteReading'
+          mappings:
+            -
+              value: '1'
+              newvalue: 'Voltage is Good'
+            -
+              value: '2'
+              newvalue: 'Voltage is Bad'
+        -
+          uuid: b8dd53d5a0fb4d91ad8c9c2193e34e75
+          name: 'IDRAC-MIB-SNMPv2::DeviceType'
+          mappings:
+            -
+              value: '1'
+              newvalue: deviceTypeIsOther
+            -
+              value: '2'
+              newvalue: deviceTypeIsUnknown
+            -
+              value: '3'
+              newvalue: deviceTypeIsUnknown
+            -
+              value: '4'
+              newvalue: deviceTypeIsEDRAM
+            -
+              value: '5'
+              newvalue: eviceTypeIsVRAM
+            -
+              value: '6'
+              newvalue: deviceTypeIsSRAM
+            -
+              value: '7'
+              newvalue: deviceTypeIsRAM
+            -
+              value: '8'
+              newvalue: deviceTypeIsROM
+            -
+              value: '9'
+              newvalue: deviceTypeIsFLASH
+            -
+              value: '10'
+              newvalue: deviceTypeIsEEPROM
+            -
+              value: '11'
+              newvalue: deviceTypeIsFEPROM
+            -
+              value: '12'
+              newvalue: deviceTypeIsEPROM
+            -
+              value: '13'
+              newvalue: deviceTypeIsCDRAM
+            -
+              value: '14'
+              newvalue: deviceTypeIs3DRAM
+            -
+              value: '15'
+              newvalue: deviceTypeIsSDRAM
+            -
+              value: '16'
+              newvalue: deviceTypeIsSGRAM
+            -
+              value: '17'
+              newvalue: deviceTypeIsRDRAM
+            -
+              value: '18'
+              newvalue: deviceTypeIsDDR
+            -
+              value: '19'
+              newvalue: deviceTypeIsDDR2
+            -
+              value: '20'
+              newvalue: deviceTypeIsDDR2FBDIMM
+            -
+              value: '24'
+              newvalue: deviceTypeIsDDR3
+            -
+              value: '25'
+              newvalue: deviceTypeIsFBD2
+            -
+              value: '26'
+              newvalue: deviceTypeIsDDR4
+        -
+          uuid: 8e7e306705c34db8bf49fb380af170a3
+          name: 'IDRAC-MIB-SNMPv2::NetworkDeviceConnectionStatusEnum'
+          mappings:
+            -
+              value: '1'
+              newvalue: Connected
+            -
+              value: '2'
+              newvalue: Disconnected
+            -
+              value: '3'
+              newvalue: 'Driver Bad'
+            -
+              value: '4'
+              newvalue: 'Driver Disabled'
+            -
+              value: '10'
+              newvalue: 'Hardware Initializing'
+            -
+              value: '11'
+              newvalue: 'Hardware Resetting'
+            -
+              value: '12'
+              newvalue: 'Hardware Closing'
+            -
+              value: '13'
+              newvalue: 'Hardware Not ready'
+        -
+          uuid: 8218bff567a14f38aa6065f247568b6e
+          name: 'Service state'
+          mappings:
+            -
+              value: '0'
+              newvalue: Down
+            -
+              value: '1'
+              newvalue: Up
+        -
+          uuid: 6600d73e584a44aa9324a1b6dfaba53e
+          name: zabbix.host.available
+          mappings:
+            -
+              value: '0'
+              newvalue: 'not available'
+            -
+              value: '1'
+              newvalue: available
+            -
+              value: '2'
+              newvalue: unknown
+  triggers:
+    -
+      uuid: 0d6f607bc3a044ca8689c79419895cfc
+      expression: '(last(/Dell iDRAC by SNMP -Commtel/system.hw.uptime[hrSystemUptime.0])>0 and last(/Dell iDRAC by SNMP -Commtel/system.hw.uptime[hrSystemUptime.0])<10m) or (last(/Dell iDRAC by SNMP -Commtel/system.hw.uptime[hrSystemUptime.0])=0 and last(/Dell iDRAC by SNMP -Commtel/system.net.uptime[sysUpTime.0])<10m)'
+      name: 'Host has been restarted'
+      event_name: '{HOST.NAME} has been restarted (uptime < 10m)'
+      priority: WARNING
+      description: 'Uptime is less than 10 minutes.'
+      manual_close: 'YES'
+      dependencies:
+        -
+          name: 'No SNMP data collection'
+          expression: 'max(/Dell iDRAC by SNMP -Commtel/zabbix[host,snmp,available],{$SNMP.TIMEOUT})=0'
+      tags:
+        -
+          tag: scope
+          value: notice
